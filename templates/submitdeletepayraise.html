@@ -1,19 +1,15 @@
-<!doctype html>
-<html>
-  <body>
-    <h2>Submit to Delete a Pay Raise</h2>
+{% extends "base.html" %}
 
-    <form method="post" action="/submitdeletepayraise">
-      EmpId:<br>
-      <input type="number" name="EmpId" required><br><br>
+{% block content %}
+  <h2>Submit Pay Raise Deletion Request</h2>
 
-      PayRaiseDate:<br>
-      <input type="date" name="PayRaiseDate" required><br><br>
+  <form method="post" action="/submitdeletepayraise">
+    <label>Employee ID:</label><br>
+    <input type="number" name="EmpID" required><br><br>
 
-      <input type="submit" value="Submit">
-    </form>
+    <label>Pay Raise Date:</label><br>
+    <input type="date" name="PayRaiseDate" required><br><br>
 
-    <br>
-    <a href="/">Back to home page</a>
-  </body>
-</html>
+    <input type="submit" value="Submit">
+  </form>
+{% endblock %}

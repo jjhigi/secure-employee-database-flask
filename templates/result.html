@@ -1,8 +1,7 @@
-<!doctype html>
-<html>
-  <body>
-    <h2>Results</h2>
-    {{ msg }}
-    <br><br><b><a href="/">Back to home</a></b>
-  </body>
-</html>
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Result</h2>
+
+  <p>{{ msg }}</p>
+{% endblock %}

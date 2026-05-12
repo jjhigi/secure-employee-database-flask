@@ -1,22 +1,18 @@
-<!doctype html>
-<html>
-  <body>
-    <h2>Send a Message to Add a Pay Raise using HMAC with Encryption</h2>
+{% extends "base.html" %}
 
-    <form method="post" action="/sendaddpayraisehmac">
-      <label for="EmpId">EmpId:</label>
-      <input type="text" id="EmpId" name="EmpId"><br><br>
+{% block content %}
+  <h2>Send HMAC-Authenticated Pay Raise Message</h2>
 
-      <label for="PayRaiseDate">Pay Raise Date:</label>
-      <input type="date" id="PayRaiseDate" name="PayRaiseDate"><br><br>
+  <form method="post" action="/sendaddpayraisehmac">
+    <label for="EmpId">Employee ID:</label><br>
+    <input type="text" id="EmpId" name="EmpID"><br><br>
 
-      <label for="RaiseAmt">Raise Amount:</label>
-      <input type="text" id="RaiseAmt" name="RaiseAmt"><br><br>
+    <label for="PayRaiseDate">Pay Raise Date:</label><br>
+    <input type="date" id="PayRaiseDate" name="PayRaiseDate"><br><br>
 
-      <input type="submit" value="Submit">
-    </form>
+    <label for="RaiseAmt">Raise Amount:</label><br>
+    <input type="text" id="RaiseAmt" name="RaiseAmt"><br><br>
 
-    <br><br>
-    <b><a href="/">Back to home</a></b>
-  </body>
-</html>
+    <input type="submit" value="Submit">
+  </form>
+{% endblock %}
