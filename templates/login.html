@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+  <body>
+  <!-- Flash message for invalid login -->
+  {% with msgs = get_flashed_messages() %}
+      {% if msgs %}
+        <p>{{ msgs[0] }}</p>
+      {% endif %}
+    {% endwith %}
+
+    <h1>Login</h1>
+    <form method="post" action = "/login">
+      <input type="text" name="username"><br>
+      <input type="password" name="password"><br>
+      <input type="submit" value="Log In">
+    </form>
+  </body>
+</html>
+
+

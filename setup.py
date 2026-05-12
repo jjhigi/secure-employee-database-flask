@@ -1,0 +1,154 @@
+"""
+Database Setup Script
+
+Creates and seeds the SQLite database used by Flask Employee Manager.
+The script rebuilds the Employee and EmpPayRaise tables and inserts
+sample encrypted employee and pay raise records for testing.
+"""
+
+import sqlite3
+import Encryption
+
+# --------------------------
+# Helper encryption functions
+# --------------------------
+def enc(s: str) -> str:
+    """Encrypt a Python string and return text for storage."""
+    return Encryption.cipher.encrypt(s.encode("utf-8")).decode("utf-8")
+
+def dec(s: str) -> str:
+    """Decrypt text from SQLite back into a normal Python string."""
+    return Encryption.cipher.decrypt(s)
+
+# --------------------------
+# Open database connection
+# --------------------------
+conn = sqlite3.connect("EmployeeDB.db")
+cur = conn.cursor()
+
+# --------------------------
+# Drop tables if they exist
+# --------------------------
+try:
+    cur.execute("DROP TABLE IF EXISTS EmpPayRaise")
+    cur.execute("DROP TABLE IF EXISTS Employee")
+    conn.commit()
+    print("EmpPayRaise table dropped.")
+    print("Employee table dropped.")
+except Exception:
+    # If the tables don't exist, let the script continue
+    print("Tables did not exist.")
+
+# --------------------------
+# Create Employee table
+# UserId, Name, Age, PhNum, SecurityLevel, LoginPassword
+# Name, PhNum, LoginPassword are stored as encrypted text
+# --------------------------
+cur.execute(
+    """
+    CREATE TABLE Employee(
+        UserId INTEGER PRIMARY KEY AUTOINCREMENT,
+        Name   TEXT NOT NULL,
+        Age    INTEGER NOT NULL,
+        PhNum  TEXT NOT NULL,
+        SecurityLevel INTEGER NOT NULL,
+        LoginPassword TEXT NOT NULL
+    )
+    """
+)
+print("Employee Table created.")
+
+# --------------------------
+# Create EmpPayRaise table
+# PayRaiseId, EmpId, PayRaiseDate, RaiseAmt
+# RaiseAmt is stored as encrypted text
+# EmpId must match a valid UserId in Employee
+# --------------------------
+cur.execute(
+    """
+    CREATE TABLE EmpPayRaise(
+        PayRaiseId INTEGER PRIMARY KEY AUTOINCREMENT,
+        EmpId INTEGER NOT NULL,
+        PayRaiseDate TEXT NOT NULL,
+        RaiseAmt TEXT NOT NULL,
+        FOREIGN KEY (EmpId) REFERENCES Employee(UserId)
+    )
+    """
+)
+print("EmpPayRaise Table created.")
+
+# --------------------------
+# Insert at least 6 employees (with encrypted fields)
+# --------------------------
+employees = [
+    ("PDiana", 34, "8135550001", 1, "test123"),
+    ("TJones", 68, "8135550002", 2, "test123"),
+    ("AMath", 29, "8135550003", 3, "test123"),
+    ("BSmith", 37, "8135550004", 2, "test123"),
+    ("CJones", 41, "8135550005", 3, "test123"),
+    ("KLee",   25, "8135550006", 1, "test123"),
+]
+
+for name, age, ph, level, pwd in employees:
+    cur.execute(
+        """
+        INSERT INTO Employee (Name, Age, PhNum, SecurityLevel, LoginPassword)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (enc(name), age, enc(ph), level, enc(pwd)),
+    )
+
+# --------------------------
+# Insert at least 6 pay raises (RaiseAmt encrypted)
+# --------------------------
+raises = [
+    (1, "2020-01-11", 213.77),
+    (2, "2022-04-17", 37.33),
+    (3, "2024-09-21", 1324.98),
+    (1, "2025-01-31", 67.99),
+    (4, "2025-03-15", 150.00),
+    (2, "2025-06-01", 89.50),
+]
+
+for emp_id, dt, amt in raises:
+    # Convert number to string before encrypting
+    cur.execute(
+        """
+        INSERT INTO EmpPayRaise (EmpId, PayRaiseDate, RaiseAmt)
+        VALUES (?, ?, ?)
+        """,
+        (emp_id, dt, enc(str(amt))),
+    )
+
+conn.commit()
+
+# --------------------------
+# Show all rows (encrypted values)
+# --------------------------
+print()
+print("Employee table (encrypted values):")
+for row in cur.execute("SELECT * FROM Employee"):
+    print(row)
+
+print()
+print("EmpPayRaise table (encrypted RaiseAmt):")
+for row in cur.execute("SELECT * FROM EmpPayRaise"):
+    print(row)
+
+# --------------------------
+# Decrypted Username / Password / SecurityLevel
+# --------------------------
+print()
+print("Decrypted credentials for testing (Username, Password, SecurityLevel):")
+print("UserId | Name       | SecurityLevel | LoginPassword")
+for row in cur.execute(
+    "SELECT UserId, Name, SecurityLevel, LoginPassword FROM Employee"
+):
+    user_id = row[0]
+    name = dec(row[1])
+    level = row[2]
+    pwd = dec(row[3])
+    print(f"{user_id:6} | {name:10} | {level:13} | {pwd}")
+
+conn.close()
+print("Connection closed.")

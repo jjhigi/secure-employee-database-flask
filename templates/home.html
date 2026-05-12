@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>Welcome {{ name }}</h1>
+
+    {% if session.get('UserId') %}
+      <h2><a href="/mypayraises">Show My Pay Raises</a></h2>
+      <h2><a href="/addpayraise">Add a Pay Raise</a></h2>
+      <h2><a href="/logout">Log out</a></h2>
+
+      {% if session.get('SecurityLevel') == 1 %}
+        <h2><a href="/addemployee">Add New Employee</a></h2>
+        <h2><a href="/listemployees">List Employees</a></h2>
+
+      {% elif session.get('SecurityLevel') == 2 %}
+        <h2><a href="/listemployees">List Employees</a></h2>
+        <h2><a href="/listpayraises">List Pay Raises</a></h2>
+      {% endif %}
+
+      <!-- MODULE 13 LINK (SecurityLevel <= 2) -->
+      {% if session.get('SecurityLevel') <= 2 %}
+        <h2><a href="/submitdeletepayraise">Submit to Delete a Pay Raise</a></h2>
+      {% endif %}
+
+      <!-- MODULE 14 LINK (available to all logged-in users) -->
+      <h2><a href="/sendaddpayraisehmac">
+        Send a Message to Add a Pay Raise using HMAC with Encryption
+      </a></h2>
+
+    {% else %}
+      <p>Not logged in.</p>
+      <a href="/login">Go to Login</a>
+    {% endif %}
+  </body>
+</html>

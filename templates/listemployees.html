@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+  <body>
+    <table border="1">
+      <tr>
+        <td>UserId</td>
+        <td>Name</td>
+        <td>Age</td>
+        <td>PhNum</td>
+        <td>Security Level</td>
+        <td>Login Password</td>
+      </tr>
+      {% for row in rows %}
+      <tr>
+        <td>{{ row["UserId"] }}</td>
+        <td>{{ row["Name"] }}</td>
+        <td>{{ row["Age"] }}</td>
+        <td>{{ row["PhNum"] }}</td>
+        <td>{{ row["SecurityLevel"] }}</td>
+        <td>{{ row["LoginPassword"] }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    <a href="/">Back to Home Page</a>
+  </body>
+</html>
+
+
+
+
