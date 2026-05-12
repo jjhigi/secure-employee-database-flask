@@ -1,13 +1,15 @@
-<!doctype html>
-<html>
-  <body>
-    <h2>Pay Raise Information</h2>
-    <form method="post">
-      PayRaiseDate:<br>
-      <input type="date" name="PayRaiseDate" required><br>
-      Raise Amount:<br>
-      <input type="text" name="RaiseAmt"><br>
-      <input type="submit" value="Submit">
-    </form>
-  </body>
-</html>
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Add Pay Raise</h2>
+
+  <form method="post">
+    <label>Pay Raise Date:</label><br>
+    <input type="date" name="PayRaiseDate" required><br><br>
+
+    <label>Raise Amount:</label><br>
+    <input type="text" name="RaiseAmt"><br><br>
+
+    <input type="submit" value="Submit">
+  </form>
+{% endblock %}

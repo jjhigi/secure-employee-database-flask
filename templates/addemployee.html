@@ -1,15 +1,24 @@
-<!doctype html>
-<html>
-  <body>
-    <h2>Add a New Employee</h2>
-    <form action="/addrec" method="post">
-      Name:<br><input type="text" name="Name"><br>
-      Age:<br><input type="text" name="Age"><br>
-      PhNum:<br><input type="tel" name="PhNum"><br>
-      Security Level:<br><input type="text" name="SecurityLevel"><br>
-      Login Password:<br><input type="password" name="LoginPassword"><br>
-      <input type="submit" value="Submit">
-    </form>
-  </body>
-</html>
+{% extends "base.html" %}
 
+{% block content %}
+  <h2>Add a New Employee</h2>
+
+  <form action="/addrec" method="post">
+    <label>Name:</label><br>
+    <input type="text" name="Name"><br><br>
+
+    <label>Age:</label><br>
+    <input type="text" name="Age"><br><br>
+
+    <label>Phone Number:</label><br>
+    <input type="tel" name="PhNum"><br><br>
+
+    <label>Security Level:</label><br>
+    <input type="text" name="SecurityLevel"><br><br>
+
+    <label>Login Password:</label><br>
+    <input type="password" name="LoginPassword"><br><br>
+
+    <input type="submit" value="Submit">
+  </form>
+{% endblock %}

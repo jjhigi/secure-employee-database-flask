@@ -50,7 +50,7 @@ def dec(s: str) -> str:
 # --------------------------
 def require_login():
     """If user is not logged in, send them to the login page."""
-    if "UserId" not in session:
+    if "UserID" not in session:
         return render_template("login.html")
     return None
 
@@ -99,7 +99,7 @@ def login():
         if row:
             # Store decrypted name and security level in the session
             session.clear()
-            session["UserId"] = row["UserId"]
+            session["UserID"] = row["UserID"]
             session["name"] = dec(row["Name"])
             session["SecurityLevel"] = int(row["SecurityLevel"])
             flash("Login successful.")
@@ -192,7 +192,7 @@ def listemployees():
     decrypted = []
     for r in rows:
         decrypted.append({
-            "UserId": r["UserId"],
+            "UserID": r["UserID"],
             "Name": dec(r["Name"]),
             "Age": r["Age"],
             "PhNum": dec(r["PhNum"]),
@@ -222,8 +222,8 @@ def listpayraises():
     decrypted = []
     for r in rows:
         decrypted.append({
-            "PayRaiseId": r["PayRaiseId"],
-            "EmpId": r["EmpId"],
+            "PayRaiseID": r["PayRaiseID"],
+            "EmpID": r["EmpID"],
             "PayRaiseDate": r["PayRaiseDate"],
             "RaiseAmt": float(dec(r["RaiseAmt"])),
         })
@@ -241,13 +241,13 @@ def mypayraises():
     if guard:
         return guard
 
-    uid = session["UserId"]
+    uid = session["UserID"]
 
     with get_db() as con:
         con.row_factory = sql.Row
         cur = con.cursor()
         cur.execute(
-            "SELECT PayRaiseDate, RaiseAmt FROM EmpPayRaise WHERE EmpId=? ORDER BY PayRaiseDate DESC",
+            "SELECT PayRaiseDate, RaiseAmt FROM EmpPayRaise WHERE EmpID=? ORDER BY PayRaiseDate DESC",
             (uid,),
         )
         rows = cur.fetchall()
@@ -299,10 +299,10 @@ def addpayraise():
             cur = con.cursor()
             cur.execute(
                 """
-                INSERT INTO EmpPayRaise (EmpId, PayRaiseDate, RaiseAmt)
+                INSERT INTO EmpPayRaise (EmpID, PayRaiseDate, RaiseAmt)
                 VALUES (?, ?, ?)
                 """,
-                (session["UserId"], dt, enc(str(val))),
+                (session["UserID"], dt, enc(str(val))),
             )
             con.commit()
 
@@ -318,7 +318,7 @@ def addpayraise():
 def submitdeletepayraise():
     """
     Page to submit a request to delete a pay raise.
-    - Validates EmpId and PayRaiseDate exist in EmpPayRaise.
+    - Validates EmpID and PayRaiseDate exist in EmpPayRaise.
     - If valid, sends encrypted message via socket to localhost:9999.
     """
     guard = require_level({1, 2})
@@ -326,15 +326,15 @@ def submitdeletepayraise():
         return guard
 
     if request.method == "POST":
-        emp_id = request.form.get("EmpId", "").strip()
+        emp_id = request.form.get("EmpID", "").strip()
         dt = request.form.get("PayRaiseDate", "").strip()
 
         # Basic validation
         errors = []
         if not emp_id:
-            errors.append("EmpId is required.")
+            errors.append("EmpID is required.")
         elif not emp_id.isdigit():
-            errors.append("EmpId must be a number.")
+            errors.append("EmpID must be a number.")
 
         if not dt:
             errors.append("PayRaiseDate is required.")
@@ -352,7 +352,7 @@ def submitdeletepayraise():
             con.row_factory = sql.Row
             cur = con.cursor()
             cur.execute(
-                "SELECT * FROM EmpPayRaise WHERE EmpId=? AND PayRaiseDate=?",
+                "SELECT * FROM EmpPayRaise WHERE EmpID=? AND PayRaiseDate=?",
                 (int(emp_id), dt),
             )
             row = cur.fetchone()
@@ -361,10 +361,10 @@ def submitdeletepayraise():
             # Data validation issue: no matching row
             return render_template(
                 "result.html",
-                msg="No pay raise found for that EmpId and PayRaiseDate."
+                msg="No pay raise found for that EmpID and PayRaiseDate."
             )
 
-        # Build message "EmpId^%$PayRaiseDate"
+        # Build message "EmpID^%$PayRaiseDate"
         separator = "^%$"
         plain_msg = f"{emp_id}{separator}{dt}"
 
@@ -399,7 +399,7 @@ def submitdeletepayraise():
 def sendaddpayraisehmac():
     """
     Page to send an authenticated (HMAC + Encryption) message to add a pay raise.
-    - Validates EmpId > 0 and exists in Employee table.
+    - Validates EmpID > 0 and exists in Employee table.
     - Validates PayRaiseDate is a valid date.
     - Validates RaiseAmt is numeric and > 0.
     - If valid, builds a message with a separator, encrypts it with AES,
@@ -412,33 +412,33 @@ def sendaddpayraisehmac():
         return guard
 
     if request.method == "POST":
-        emp_id = request.form.get("EmpId", "").strip()
+        emp_id = request.form.get("EmpID", "").strip()
         payraise_date = request.form.get("PayRaiseDate", "").strip()
         raise_amt = request.form.get("RaiseAmt", "").strip()
 
         errors = []
 
-        # Validate EmpId is numeric and > 0
+        # Validate EmpID is numeric and > 0
         if not emp_id:
-            errors.append("EmpId is required.")
+            errors.append("EmpID is required.")
         else:
             if not emp_id.isdigit():
-                errors.append("EmpId must be a numeric value.")
+                errors.append("EmpID must be a numeric value.")
             else:
                 if int(emp_id) <= 0:
-                    errors.append("EmpId must be greater than 0.")
+                    errors.append("EmpID must be greater than 0.")
                 else:
-                    # Check EmpId exists in Employee table
+                    # Check EmpID exists in Employee table
                     with get_db() as con:
                         con.row_factory = sql.Row
                         cur = con.cursor()
                         cur.execute(
-                            "SELECT UserId FROM Employee WHERE UserId=?",
+                            "SELECT UserID FROM Employee WHERE UserID=?",
                             (int(emp_id),),
                         )
                         row = cur.fetchone()
                     if not row:
-                        errors.append("EmpId does not exist in the Employee table.")
+                        errors.append("EmpID does not exist in the Employee table.")
 
         # Validate PayRaiseDate
         if not payraise_date:

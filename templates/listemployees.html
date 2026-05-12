@@ -1,30 +1,28 @@
-<!doctype html>
-<html>
-  <body>
-    <table border="1">
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Employee Records</h2>
+
+  <table border="1">
+    <tr>
+      <td>UserID</td>
+      <td>Name</td>
+      <td>Age</td>
+      <td>Phone Number</td>
+      <td>Security Level</td>
+      <td>Login Password</td>
+    </tr>
+
+    {% for row in rows %}
       <tr>
-        <td>UserId</td>
-        <td>Name</td>
-        <td>Age</td>
-        <td>PhNum</td>
-        <td>Security Level</td>
-        <td>Login Password</td>
-      </tr>
-      {% for row in rows %}
-      <tr>
-        <td>{{ row["UserId"] }}</td>
+        <td>{{ row["UserID"] }}</td>
         <td>{{ row["Name"] }}</td>
         <td>{{ row["Age"] }}</td>
         <td>{{ row["PhNum"] }}</td>
         <td>{{ row["SecurityLevel"] }}</td>
         <td>{{ row["LoginPassword"] }}</td>
       </tr>
-      {% endfor %}
-    </table>
-    <a href="/">Back to Home Page</a>
-  </body>
-</html>
-
-
-
+    {% endfor %}
+  </table>
+{% endblock %}
 

@@ -1,23 +1,23 @@
-<!doctype html>
-<html>
-  <body>
-    <table border="1">
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Pay Raise Records</h2>
+
+  <table border="1">
+    <tr>
+      <td>Pay Raise ID</td>
+      <td>Employee ID</td>
+      <td>Pay Raise Date</td>
+      <td>Raise Amount</td>
+    </tr>
+
+    {% for row in rows %}
       <tr>
-        <td>Pay Raise Id</td>
-        <td>Emp Id</td>
-        <td>Pay Raise Date</td>
-        <td>Raise Amt</td>
-      </tr>
-      {% for row in rows %}
-      <tr>
-        <td>{{ row["PayRaiseId"] }}</td>
-        <td>{{ row["EmpId"] }}</td>
+        <td>{{ row["PayRaiseID"] }}</td>
+        <td>{{ row["EmpID"] }}</td>
         <td>{{ row["PayRaiseDate"] }}</td>
         <td>{{ row["RaiseAmt"] }}</td>
       </tr>
-      {% endfor %}
-    </table>
-    <a href="/">Back to home page</a>
-  </body>
-</html>
-
+    {% endfor %}
+  </table>
+{% endblock %}

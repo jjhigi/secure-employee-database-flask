@@ -1,18 +1,19 @@
-<!doctype html>
-<html>
-  <body>
-    <table border="1">
-      <tr>
-        <td>PayRaiseDate</td>
-        <td>RaiseAmt</td>
-      </tr>
-      {% for row in rows %}
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>My Pay Raises</h2>
+
+  <table border="1">
+    <tr>
+      <td>Pay Raise Date</td>
+      <td>Raise Amount</td>
+    </tr>
+
+    {% for row in rows %}
       <tr>
         <td>{{ row["PayRaiseDate"] }}</td>
         <td>{{ row["RaiseAmt"] }}</td>
       </tr>
-      {% endfor %}
-    </table>
-    <a href="/">Go back to home page</a>
-  </body>
-</html>
+    {% endfor %}
+  </table>
+{% endblock %}
