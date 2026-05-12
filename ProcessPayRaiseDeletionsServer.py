@@ -26,7 +26,7 @@ class PayRaiseDeleteHandler(socketserver.BaseRequestHandler):
     """
     Handles a single delete request:
       1. Receives an encrypted message from the client.
-      2. Decrypts to get "EmpId^%$PayRaiseDate".
+      2. Decrypts to get "EmpID^%$PayRaiseDate".
       3. Validates fields and the existence of the record.
       4. Deletes the matching EmpPayRaise record if valid.
       5. Prints clear messages about what happened.
@@ -59,7 +59,7 @@ class PayRaiseDeleteHandler(socketserver.BaseRequestHandler):
 
         print(f"Decrypted message: {plain_text}")
 
-        # Expect format: "EmpId^%$PayRaiseDate"
+        # Expect format: "EmpID^%$PayRaiseDate"
         if SEPARATOR not in plain_text:
             print("Validation error: Message is missing the separator.")
             return
@@ -68,17 +68,17 @@ class PayRaiseDeleteHandler(socketserver.BaseRequestHandler):
         emp_id_str = emp_id_str.strip()
         payraise_date = payraise_date.strip()
 
-        print(f"EmpId: {emp_id_str}")
+        print(f"EmpID: {emp_id_str}")
         print(f"PayRaiseDate: {payraise_date}")
 
-        # Validate EmpId is an integer
+        # Validate EmpID is an integer
         try:
             emp_id = int(emp_id_str)
             if emp_id <= 0:
-                print("Validation error: EmpId must be a positive integer.")
+                print("Validation error: EmpID must be a positive integer.")
                 return
         except ValueError:
-            print("Validation error: EmpId is not a valid integer.")
+            print("Validation error: EmpID is not a valid integer.")
             return
 
         # Validate date format
@@ -94,7 +94,7 @@ class PayRaiseDeleteHandler(socketserver.BaseRequestHandler):
             cur = conn.cursor()
 
             cur.execute(
-                "SELECT PayRaiseId FROM EmpPayRaise WHERE EmpId=? AND PayRaiseDate=?",
+                "SELECT PayRaiseID FROM EmpPayRaise WHERE EmpID=? AND PayRaiseDate=?",
                 (emp_id, payraise_date),
             )
             row = cur.fetchone()
@@ -102,7 +102,7 @@ class PayRaiseDeleteHandler(socketserver.BaseRequestHandler):
             if not row:
                 print(
                     "Validation error: No matching EmpPayRaise record found "
-                    f"for EmpId={emp_id} and PayRaiseDate={payraise_date}."
+                    f"for EmpID={emp_id} and PayRaiseDate={payraise_date}."
                 )
                 conn.close()
                 return
@@ -111,7 +111,7 @@ class PayRaiseDeleteHandler(socketserver.BaseRequestHandler):
 
             # Delete the record
             cur.execute(
-                "DELETE FROM EmpPayRaise WHERE PayRaiseId=?",
+                "DELETE FROM EmpPayRaise WHERE PayRaiseID=?",
                 (payraise_id,),
             )
             conn.commit()

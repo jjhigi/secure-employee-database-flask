@@ -41,13 +41,13 @@ except Exception:
 
 # --------------------------
 # Create Employee table
-# UserId, Name, Age, PhNum, SecurityLevel, LoginPassword
+# UserID, Name, Age, PhNum, SecurityLevel, LoginPassword
 # Name, PhNum, LoginPassword are stored as encrypted text
 # --------------------------
 cur.execute(
     """
     CREATE TABLE Employee(
-        UserId INTEGER PRIMARY KEY AUTOINCREMENT,
+        UserID INTEGER PRIMARY KEY AUTOINCREMENT,
         Name   TEXT NOT NULL,
         Age    INTEGER NOT NULL,
         PhNum  TEXT NOT NULL,
@@ -60,25 +60,25 @@ print("Employee Table created.")
 
 # --------------------------
 # Create EmpPayRaise table
-# PayRaiseId, EmpId, PayRaiseDate, RaiseAmt
+# PayRaiseID, EmpID, PayRaiseDate, RaiseAmt
 # RaiseAmt is stored as encrypted text
-# EmpId must match a valid UserId in Employee
+# EmpID must match a valid UserID in Employee
 # --------------------------
 cur.execute(
     """
     CREATE TABLE EmpPayRaise(
-        PayRaiseId INTEGER PRIMARY KEY AUTOINCREMENT,
-        EmpId INTEGER NOT NULL,
+        PayRaiseID INTEGER PRIMARY KEY AUTOINCREMENT,
+        EmpID INTEGER NOT NULL,
         PayRaiseDate TEXT NOT NULL,
         RaiseAmt TEXT NOT NULL,
-        FOREIGN KEY (EmpId) REFERENCES Employee(UserId)
+        FOREIGN KEY (EmpID) REFERENCES Employee(UserID)
     )
     """
 )
 print("EmpPayRaise Table created.")
 
 # --------------------------
-# Insert at least 6 employees (with encrypted fields)
+# Insert employees (with encrypted fields)
 # --------------------------
 employees = [
     ("PDiana", 34, "8135550001", 1, "test123"),
@@ -99,7 +99,7 @@ for name, age, ph, level, pwd in employees:
     )
 
 # --------------------------
-# Insert at least 6 pay raises (RaiseAmt encrypted)
+# Insert pay raises (RaiseAmt encrypted)
 # --------------------------
 raises = [
     (1, "2020-01-11", 213.77),
@@ -114,7 +114,7 @@ for emp_id, dt, amt in raises:
     # Convert number to string before encrypting
     cur.execute(
         """
-        INSERT INTO EmpPayRaise (EmpId, PayRaiseDate, RaiseAmt)
+        INSERT INTO EmpPayRaise (EmpID, PayRaiseDate, RaiseAmt)
         VALUES (?, ?, ?)
         """,
         (emp_id, dt, enc(str(amt))),
@@ -140,9 +140,9 @@ for row in cur.execute("SELECT * FROM EmpPayRaise"):
 # --------------------------
 print()
 print("Decrypted credentials for testing (Username, Password, SecurityLevel):")
-print("UserId | Name       | SecurityLevel | LoginPassword")
+print("UserID | Name       | SecurityLevel | LoginPassword")
 for row in cur.execute(
-    "SELECT UserId, Name, SecurityLevel, LoginPassword FROM Employee"
+    "SELECT UserID, Name, SecurityLevel, LoginPassword FROM Employee"
 ):
     user_id = row[0]
     name = dec(row[1])

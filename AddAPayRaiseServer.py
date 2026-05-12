@@ -46,7 +46,7 @@ class AddPayRaiseHandler(socketserver.BaseRequestHandler):
       2. Splits off the last 64 bytes as the tag.
       3. Decrypts the ciphertext portion to recover the plaintext.
       4. Verifies the HMAC over the plaintext.
-      5. If authenticated, parses EmpId, PayRaiseDate, RaiseAmt.
+      5. If authenticated, parses EmpID, PayRaiseDate, RaiseAmt.
       6. Validates all fields and inserts a new EmpPayRaise record if valid.
       7. Prints clear messages about what happened.
     """
@@ -86,7 +86,7 @@ class AddPayRaiseHandler(socketserver.BaseRequestHandler):
             print("Authentication failed: HMAC verification did not match.")
             return
 
-        # Split plaintext into fields: EmpId, PayRaiseDate, RaiseAmt
+        # Split plaintext into fields: EmpID, PayRaiseDate, RaiseAmt
         parts = plaintext.split(HMAC_SEPARATOR)
         if len(parts) != 3:
             print("Validation error: Message format incorrect. "
@@ -97,14 +97,14 @@ class AddPayRaiseHandler(socketserver.BaseRequestHandler):
         payraise_date = parts[1].strip()
         raise_amt_str = parts[2].strip()
 
-        # Validate EmpId
+        # Validate EmpID
         try:
             emp_id = int(emp_id_str)
             if emp_id <= 0:
-                print("Validation error: EmpId must be a positive integer.")
+                print("Validation error: EmpID must be a positive integer.")
                 return
         except ValueError:
-            print("Validation error: EmpId is not a valid integer.")
+            print("Validation error: EmpID is not a valid integer.")
             return
 
         # Validate PayRaiseDate
@@ -124,19 +124,19 @@ class AddPayRaiseHandler(socketserver.BaseRequestHandler):
             print("Validation error: RaiseAmt is not a valid numeric value.")
             return
 
-        # Connect to database and validate EmpId exists, then insert record
+        # Connect to database and validate EmpID exists, then insert record
         try:
             conn = sqlite3.connect(DB_NAME)
             cur = conn.cursor()
 
-            # Check EmpId exists in Employee table
+            # Check EmpID exists in Employee table
             cur.execute(
-                "SELECT UserId FROM Employee WHERE UserId=?",
+                "SELECT UserID FROM Employee WHERE UserID=?",
                 (emp_id,),
             )
             row = cur.fetchone()
             if not row:
-                print("Validation error: EmpId does not exist in the Employee table.")
+                print("Validation error: EmpID does not exist in the Employee table.")
                 conn.close()
                 return
 
@@ -146,7 +146,7 @@ class AddPayRaiseHandler(socketserver.BaseRequestHandler):
             # Insert new EmpPayRaise record
             cur.execute(
                 """
-                INSERT INTO EmpPayRaise (EmpId, PayRaiseDate, RaiseAmt)
+                INSERT INTO EmpPayRaise (EmpID, PayRaiseDate, RaiseAmt)
                 VALUES (?, ?, ?)
                 """,
                 (emp_id, payraise_date, enc_raise_amt),
@@ -154,7 +154,7 @@ class AddPayRaiseHandler(socketserver.BaseRequestHandler):
             conn.commit()
             conn.close()
 
-            print(f"empId: {emp_id}")
+            print(f"empID: {emp_id}")
             print("Record successfully added")
 
         except sqlite3.Error as e:
