@@ -2,7 +2,7 @@
 
 A local-only Flask web application for managing employee records and pay raise data.
 
-This project started as a class assignment and has been expanded into a more polished local database app with shared templates, styling, employee search, pay raise filtering, employee editing, role-based access control, password hashing, encrypted database fields, and TCP socket messaging demos.
+This project started as a class assignment and has been expanded into a more polished local database app with shared templates, styling, employee search, pay raise filtering, employee editing, role-based access control, password hashing, encrypted database fields, safer database setup scripts, and TCP socket messaging demos.
 
 ## Tech Stack
 
@@ -46,7 +46,8 @@ It is **not intended for public internet deployment** without additional securit
 - Send HMAC-authenticated encrypted socket messages to add pay raises
 - Shared Jinja base template for consistent layout
 - Basic CSS styling for navigation, forms, and tables
-- Pre-seeded with sample employee and pay raise data for local testing
+- Safer database setup scripts for initialization, demo seeding, and intentional resets
+- Pre-seeded sample employee and pay raise data available for local testing
 
 ## Getting Started
 
@@ -67,8 +68,11 @@ python -m venv .venv
 # Install dependencies
 pip install -r requirements.txt
 
-# Create and seed the SQLite database
-python setup.py
+# Create the SQLite database tables without deleting existing data
+python init_db.py
+
+# Optional: add demo employee and pay raise data
+python seed_demo.py
 ```
 
 ### Running
@@ -126,20 +130,20 @@ python AddAPayRaiseServer.py
 ## Database Commands
 
 ```bash
-# Create or rebuild the database with sample data
+# Safely create database tables without deleting existing data
+python init_db.py
+
+# Add demo data to an empty database
+python seed_demo.py
+
+# Intentionally reset and rebuild the demo database
+python reset_demo_db.py
+
+# Backward-compatible reset command
 python setup.py
-
-# Start the Flask application
-python app.py
-
-# Start encrypted delete-message server
-python ProcessPayRaiseDeletionsServer.py
-
-# Start HMAC-authenticated add-message server
-python AddAPayRaiseServer.py
 ```
 
-> **Note:** Running `setup.py` rebuilds the demo database. Any records added while testing will be erased.
+> **Warning:** `reset_demo_db.py` and `setup.py` delete existing Employee and EmpPayRaise records before recreating the demo database. Use `init_db.py` for safer setup.
 
 ## Architecture
 
@@ -186,6 +190,9 @@ Browser  -->  Flask App  -->  encrypted + HMAC socket message
 ```text
 flask-employee-manager/
 ├── app.py
+├── init_db.py
+├── seed_demo.py
+├── reset_demo_db.py
 ├── setup.py
 ├── Encryption.py
 ├── ProcessPayRaiseDeletionsServer.py
@@ -212,7 +219,7 @@ flask-employee-manager/
 
 ## Demo Data Notice
 
-This project uses sample employee and pay raise records for demonstration purposes only. The setup script creates a local SQLite database and seeds it with fake employee data for testing.
+This project uses sample employee and pay raise records for demonstration purposes only. The demo seed script creates fake employee data for local testing.
 
 The seeded demo accounts all use the password `test123`, but the application stores those passwords as hashes rather than reversible encrypted values.
 
@@ -226,7 +233,6 @@ However, it is still a local educational/demo application. It is not production-
 
 - Moving secrets and encryption keys out of source code
 - CSRF protection for forms
-- Safer database setup scripts that do not reset data accidentally
 - Stronger key and IV/nonce handling for encryption
 - Debug mode disabled outside development
 - More complete logging, backup, and account management controls
