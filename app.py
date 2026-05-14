@@ -14,9 +14,15 @@ import Encryption
 import socket
 import hmac
 import hashlib
+import os
 
 app = Flask(__name__)
-app.secret_key = "dev-secret-key"
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key-local-only")
+
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+)
 
 # --------------------------
 # HMAC / socket constants
@@ -742,4 +748,5 @@ def sendaddpayraisehmac():
 # Run
 # --------------------------
 if __name__ == "__main__":
-    app.run(debug=True)
+    debug_mode = os.environ.get("FLASK_DEBUG", "0") == "1"
+    app.run(debug=debug_mode)
