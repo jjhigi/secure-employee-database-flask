@@ -222,10 +222,15 @@ def listemployees():
 # --------------------------
 @app.route("/listpayraises")
 def listpayraises():
-    """List all pay raises (RaiseAmt decrypted)."""
+    """List pay raises, with optional filtering by employee ID, date range, and minimum amount."""
     guard = require_level({2})
     if guard:
         return guard
+
+    emp_id_filter = request.args.get("emp_id", "").strip()
+    start_date_filter = request.args.get("start_date", "").strip()
+    end_date_filter = request.args.get("end_date", "").strip()
+    min_amount_filter = request.args.get("min_amount", "").strip()
 
     with get_db() as con:
         con.row_factory = sql.Row
@@ -235,14 +240,44 @@ def listpayraises():
 
     decrypted = []
     for r in rows:
-        decrypted.append({
+        raise_amount = float(dec(r["RaiseAmt"]))
+
+        pay_raise = {
             "PayRaiseID": r["PayRaiseID"],
             "EmpID": r["EmpID"],
             "PayRaiseDate": r["PayRaiseDate"],
-            "RaiseAmt": float(dec(r["RaiseAmt"])),
-        })
+            "RaiseAmt": raise_amount,
+        }
 
-    return render_template("listpayraises.html", rows=decrypted)
+        include_record = True
+
+        if emp_id_filter:
+            include_record = include_record and str(pay_raise["EmpID"]) == emp_id_filter
+
+        if start_date_filter:
+            include_record = include_record and pay_raise["PayRaiseDate"] >= start_date_filter
+
+        if end_date_filter:
+            include_record = include_record and pay_raise["PayRaiseDate"] <= end_date_filter
+
+        if min_amount_filter:
+            try:
+                min_amount = float(min_amount_filter)
+                include_record = include_record and pay_raise["RaiseAmt"] >= min_amount
+            except ValueError:
+                include_record = False
+
+        if include_record:
+            decrypted.append(pay_raise)
+
+    return render_template(
+        "listpayraises.html",
+        rows=decrypted,
+        emp_id_filter=emp_id_filter,
+        start_date_filter=start_date_filter,
+        end_date_filter=end_date_filter,
+        min_amount_filter=min_amount_filter,
+    )
 
 
 # --------------------------
