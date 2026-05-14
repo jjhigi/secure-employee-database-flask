@@ -2,7 +2,7 @@
 
 A local-only Flask web application for managing employee records and pay raise data.
 
-This project started as a class assignment and has been expanded into a more polished local database app with shared templates, styling, employee search, pay raise filtering, employee editing, role-based access control, password hashing, encrypted database fields, safer database setup scripts, and TCP socket messaging demos.
+This project started as a class assignment and has been expanded into a more polished local database app with shared templates, styling, employee search, pay raise filtering, employee editing, employee deactivation/reactivation, admin password reset, password hashing, encrypted database fields, safer database setup scripts, and TCP socket messaging demos.
 
 ## Tech Stack
 
@@ -31,23 +31,39 @@ It is **not intended for public internet deployment** without additional securit
 
 ## Features
 
+### Employee Management
+
+- Add new employee records
+- Edit existing employee records
+- Search employees by name, user ID, security level, or active/inactive status
+- View employee records without displaying passwords
+- Deactivate and reactivate employee accounts instead of deleting records
+- Block inactive employee accounts from logging in
+- Reset employee passwords as an admin using hashed password storage
+
+### Pay Raise Management
+
+- Add pay raise records directly through Flask
+- View pay raise records
+- Filter pay raise records by employee ID, date range, and minimum amount
+- Show pay raises for the currently logged-in user
+- Store pay raise amounts using AES encryption
+
+### Security and Access Control
+
 - User login system with Flask sessions
 - Passwords stored using Werkzeug password hashing
 - Role-based access control using employee security levels
-- Add new employee records
-- Edit existing employee records
-- Search employees by name, user ID, or security level
-- View employee records without displaying passwords
-- Add and view pay raise records
-- Filter pay raise records by employee ID, date range, and minimum amount
-- Show pay raises for the currently logged-in user
-- Store selected employee and pay raise fields using AES encryption
-- Send encrypted socket messages to request pay raise deletion
-- Send HMAC-authenticated encrypted socket messages to add pay raises
+- Selected employee and pay raise fields stored with AES encryption
+- HMAC-authenticated encrypted socket message for pay raise creation
+- Encrypted socket message for pay raise deletion
+
+### Project Structure and Usability
+
 - Shared Jinja base template for consistent layout
-- Basic CSS styling for navigation, forms, and tables
+- CSS styling for navigation, forms, and tables
 - Safer database setup scripts for initialization, demo seeding, and intentional resets
-- Pre-seeded sample employee and pay raise data available for local testing
+- Demo data available for local testing
 
 ## Getting Started
 
@@ -58,24 +74,32 @@ It is **not intended for public internet deployment** without additional securit
 
 ### Setup
 
+Create and activate a virtual environment:
+
 ```bash
-# Create a virtual environment
 python -m venv .venv
-
-# Activate the virtual environment on Windows
 .venv\Scripts\activate
+```
 
-# Install dependencies
+Install dependencies:
+
+```bash
 pip install -r requirements.txt
+```
 
-# Create the SQLite database tables without deleting existing data
+Create the SQLite database tables without deleting existing data:
+
+```bash
 python init_db.py
+```
 
-# Optional: add demo employee and pay raise data
+Optionally add demo employee and pay raise data:
+
+```bash
 python seed_demo.py
 ```
 
-### Running
+## Running the App
 
 Start the Flask application:
 
@@ -83,13 +107,13 @@ Start the Flask application:
 python app.py
 ```
 
-Open:
+Open the app in your browser:
 
 ```text
 http://127.0.0.1:5000
 ```
 
-Sign in with a demo account:
+Demo login:
 
 - Username: `PDiana`
 - Password: `test123`
@@ -102,7 +126,13 @@ Other seeded users also use:
 
 Some features require separate TCP servers to be running.
 
-Start the pay raise deletion server in a separate terminal:
+Start the main Flask app:
+
+```bash
+python app.py
+```
+
+Start the encrypted pay raise deletion server in a separate terminal:
 
 ```bash
 python ProcessPayRaiseDeletionsServer.py
@@ -114,7 +144,7 @@ Start the authenticated add-pay-raise server in another separate terminal:
 python AddAPayRaiseServer.py
 ```
 
-For full functionality, run all three processes at the same time:
+For full socket functionality, run all three processes at the same time:
 
 ```bash
 # Terminal 1
@@ -175,14 +205,17 @@ Browser  -->  Flask App  -->  encrypted + HMAC socket message
 | GET / POST | `/login` | No | Sign in with employee credentials |
 | GET | `/logout` | Yes | Log out current user |
 | GET | `/` | Yes | Home page with navigation links |
-| GET | `/addemployee` | Yes, Level 1 | Show add employee form |
-| POST | `/addrec` | Yes, Level 1 | Create a new employee with a hashed password |
-| GET | `/listemployees` | Yes, Level 1 or 2 | List and search employee records |
-| GET / POST | `/editemployee/<user_id>` | Yes, Level 1 | Edit an employee record |
-| GET | `/listpayraises` | Yes, Level 2 | List and filter all pay raise records |
+| GET | `/addemployee` | Level 1 | Show add employee form |
+| POST | `/addrec` | Level 1 | Create a new employee with a hashed password |
+| GET | `/listemployees` | Level 1 or 2 | List and search employee records |
+| GET / POST | `/editemployee/<user_id>` | Level 1 | Edit an employee record |
+| GET / POST | `/resetpassword/<user_id>` | Level 1 | Reset an employee password |
+| POST | `/deactivateemployee/<user_id>` | Level 1 | Mark an employee account as inactive |
+| POST | `/reactivateemployee/<user_id>` | Level 1 | Reactivate an inactive employee account |
+| GET | `/listpayraises` | Level 2 | List and filter all pay raise records |
 | GET | `/mypayraises` | Yes | Show current user's pay raises |
 | GET / POST | `/addpayraise` | Yes | Add pay raise directly through Flask |
-| GET / POST | `/submitdeletepayraise` | Yes, Level 1 or 2 | Send encrypted delete request to TCP server |
+| GET / POST | `/submitdeletepayraise` | Level 1 or 2 | Send encrypted delete request to TCP server |
 | GET / POST | `/sendaddpayraisehmac` | Yes | Send encrypted and authenticated add-pay-raise message |
 
 ## Project Structure
@@ -212,6 +245,7 @@ flask-employee-manager/
     ├── listpayraises.html
     ├── login.html
     ├── mypayraises.html
+    ├── resetpassword.html
     ├── result.html
     ├── sendaddpayraisehmac.html
     └── submitdeletepayraise.html
