@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Edit Employee</h2>
+
+  <form method="post" action="/editemployee/{{ employee['UserID'] }}">
+    <label>Name:</label><br>
+    <input type="text" name="Name" value="{{ employee['Name'] }}"><br><br>
+
+    <label>Age:</label><br>
+    <input type="text" name="Age" value="{{ employee['Age'] }}"><br><br>
+
+    <label>Phone Number:</label><br>
+    <input type="tel" name="PhNum" value="{{ employee['PhNum'] }}"><br><br>
+
+    <label>Security Level:</label><br>
+    <input type="text" name="SecurityLevel" value="{{ employee['SecurityLevel'] }}"><br><br>
+
+    <input type="submit" value="Save Changes">
+  </form>
+{% endblock %}
