@@ -11,7 +11,6 @@ import sqlite3
 from datetime import datetime
 import Encryption
 
-
 SEPARATOR = "^%$"
 DB_NAME = "EmployeeDB.db"
 HOST, PORT = "localhost", 9999

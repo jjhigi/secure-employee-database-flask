@@ -1,66 +1,66 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h2>Pay Raise Records</h2>
+<h2>Pay Raise Records</h2>
 
-  <form method="get" action="/listpayraises" class="filter-form">
+<form method="get" action="/listpayraises" class="filter-form">
     <label for="emp_id">Employee ID:</label><br>
     <input
-      type="text"
-      id="emp_id"
-      name="emp_id"
-      value="{{ emp_id_filter }}"
-      placeholder="Example: 1"
+            type="text"
+            id="emp_id"
+            name="emp_id"
+            value="{{ emp_id_filter }}"
+            placeholder="Example: 1"
     ><br><br>
 
     <label for="start_date">Start Date:</label><br>
     <input
-      type="date"
-      id="start_date"
-      name="start_date"
-      value="{{ start_date_filter }}"
+            type="date"
+            id="start_date"
+            name="start_date"
+            value="{{ start_date_filter }}"
     ><br><br>
 
     <label for="end_date">End Date:</label><br>
     <input
-      type="date"
-      id="end_date"
-      name="end_date"
-      value="{{ end_date_filter }}"
+            type="date"
+            id="end_date"
+            name="end_date"
+            value="{{ end_date_filter }}"
     ><br><br>
 
     <label for="min_amount">Minimum Raise Amount:</label><br>
     <input
-      type="text"
-      id="min_amount"
-      name="min_amount"
-      value="{{ min_amount_filter }}"
-      placeholder="Example: 100"
+            type="text"
+            id="min_amount"
+            name="min_amount"
+            value="{{ min_amount_filter }}"
+            placeholder="Example: 100"
     ><br><br>
 
     <input type="submit" value="Filter">
     <a href="/listpayraises">Clear</a>
-  </form>
+</form>
 
-  {% if rows %}
-    <table border="1">
-      <tr>
+{% if rows %}
+<table border="1">
+    <tr>
         <td>Pay Raise ID</td>
         <td>Employee ID</td>
         <td>Pay Raise Date</td>
         <td>Raise Amount</td>
-      </tr>
+    </tr>
 
-      {% for row in rows %}
-        <tr>
-          <td>{{ row["PayRaiseID"] }}</td>
-          <td>{{ row["EmpID"] }}</td>
-          <td>{{ row["PayRaiseDate"] }}</td>
-          <td>{{ row["RaiseAmt"] }}</td>
-        </tr>
-      {% endfor %}
-    </table>
-  {% else %}
-    <p>No pay raise records found.</p>
-  {% endif %}
+    {% for row in rows %}
+    <tr>
+        <td>{{ row["PayRaiseID"] }}</td>
+        <td>{{ row["EmpID"] }}</td>
+        <td>{{ row["PayRaiseDate"] }}</td>
+        <td>{{ row["RaiseAmt"] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>No pay raise records found.</p>
+{% endif %}
 {% endblock %}

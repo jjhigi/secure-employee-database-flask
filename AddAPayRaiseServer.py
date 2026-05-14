@@ -16,9 +16,9 @@ import Encryption
 DB_NAME = "EmployeeDB.db"
 HOST, PORT = "localhost", 8888
 
-HMAC_SECRET = b"1234"     # must match the secret in app.py
-HMAC_TAG_LEN = 64         # sha3_512 digest length
-HMAC_SEPARATOR = "^%$"    # same separator used by the client
+HMAC_SECRET = b"1234"  # must match the secret in app.py
+HMAC_TAG_LEN = 64  # sha3_512 digest length
+HMAC_SEPARATOR = "^%$"  # same separator used by the client
 
 
 def enc(s: str) -> str:

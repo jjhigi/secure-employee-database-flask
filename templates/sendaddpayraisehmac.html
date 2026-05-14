@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h2>Send HMAC-Authenticated Pay Raise Message</h2>
+<h2>Send HMAC-Authenticated Pay Raise Message</h2>
 
-  <form method="post" action="/sendaddpayraisehmac">
+<form method="post" action="/sendaddpayraisehmac">
     <label for="EmpId">Employee ID:</label><br>
     <input type="text" id="EmpId" name="EmpID"><br><br>
 
@@ -14,5 +14,5 @@
     <input type="text" id="RaiseAmt" name="RaiseAmt"><br><br>
 
     <input type="submit" value="Submit">
-  </form>
+</form>
 {% endblock %}
