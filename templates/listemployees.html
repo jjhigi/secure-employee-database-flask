@@ -3,26 +3,42 @@
 {% block content %}
   <h2>Employee Records</h2>
 
-  <table border="1">
-    <tr>
-      <td>UserID</td>
-      <td>Name</td>
-      <td>Age</td>
-      <td>Phone Number</td>
-      <td>Security Level</td>
-      <td>Login Password</td>
-    </tr>
+  <form method="get" action="/listemployees" class="search-form">
+    <label for="search">Search employees:</label><br>
+    <input
+      type="text"
+      id="search"
+      name="search"
+      value="{{ search }}"
+      placeholder="Search by name, user ID, or security level"
+    >
+    <input type="submit" value="Search">
+    <a href="/listemployees">Clear</a>
+  </form>
 
-    {% for row in rows %}
+  {% if rows %}
+    <table border="1">
       <tr>
-        <td>{{ row["UserID"] }}</td>
-        <td>{{ row["Name"] }}</td>
-        <td>{{ row["Age"] }}</td>
-        <td>{{ row["PhNum"] }}</td>
-        <td>{{ row["SecurityLevel"] }}</td>
-        <td>{{ row["LoginPassword"] }}</td>
+        <td>User ID</td>
+        <td>Name</td>
+        <td>Age</td>
+        <td>Phone Number</td>
+        <td>Security Level</td>
+        <td>Login Password</td>
       </tr>
-    {% endfor %}
-  </table>
-{% endblock %}
 
+      {% for row in rows %}
+        <tr>
+          <td>{{ row["UserID"] }}</td>
+          <td>{{ row["Name"] }}</td>
+          <td>{{ row["Age"] }}</td>
+          <td>{{ row["PhNum"] }}</td>
+          <td>{{ row["SecurityLevel"] }}</td>
+          <td>{{ row["LoginPassword"] }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p>No employees found.</p>
+  {% endif %}
+{% endblock %}
