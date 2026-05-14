@@ -12,7 +12,6 @@ To add demo data after initialization, use:
 
 import reset_demo_db
 
-
 if __name__ == "__main__":
     print("Warning: setup.py resets the demo database and deletes existing records.")
     print("For safer setup, run init_db.py instead.")

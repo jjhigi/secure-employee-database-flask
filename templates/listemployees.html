@@ -1,46 +1,58 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h2>Employee Records</h2>
+<h2>Employee Records</h2>
 
-  <form method="get" action="/listemployees" class="search-form">
+<form method="get" action="/listemployees" class="search-form">
     <label for="search">Search employees:</label><br>
     <input
-      type="text"
-      id="search"
-      name="search"
-      value="{{ search }}"
-      placeholder="Search by name, user ID, or security level"
+            type="text"
+            id="search"
+            name="search"
+            value="{{ search }}"
+            placeholder="Search by name, user ID, security level, or status"
     >
     <input type="submit" value="Search">
     <a href="/listemployees">Clear</a>
-  </form>
+</form>
 
-  {% if rows %}
-    <table border="1">
-      <tr>
+{% if rows %}
+<table border="1">
+    <tr>
         <td>User ID</td>
         <td>Name</td>
         <td>Age</td>
         <td>Phone Number</td>
         <td>Security Level</td>
+        <td>Status</td>
         <td>Actions</td>
-      </tr>
+    </tr>
 
-      {% for row in rows %}
-        <tr>
-          <td>{{ row["UserID"] }}</td>
-          <td>{{ row["Name"] }}</td>
-          <td>{{ row["Age"] }}</td>
-          <td>{{ row["PhNum"] }}</td>
-          <td>{{ row["SecurityLevel"] }}</td>
-          <td>
+    {% for row in rows %}
+    <tr>
+        <td>{{ row["UserID"] }}</td>
+        <td>{{ row["Name"] }}</td>
+        <td>{{ row["Age"] }}</td>
+        <td>{{ row["PhNum"] }}</td>
+        <td>{{ row["SecurityLevel"] }}</td>
+        <td>{{ row["Status"] }}</td>
+        <td>
             <a href="/editemployee/{{ row['UserID'] }}">Edit</a>
-          </td>
-        </tr>
-      {% endfor %}
-    </table>
-  {% else %}
-    <p>No employees found.</p>
-  {% endif %}
+
+            {% if row["IsActive"] == 1 %}
+            <form method="post" action="/deactivateemployee/{{ row['UserID'] }}" class="inline-form">
+                <input type="submit" value="Deactivate">
+            </form>
+            {% else %}
+            <form method="post" action="/reactivateemployee/{{ row['UserID'] }}" class="inline-form">
+                <input type="submit" value="Reactivate">
+            </form>
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>No employees found.</p>
+{% endif %}
 {% endblock %}
