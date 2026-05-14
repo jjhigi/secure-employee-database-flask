@@ -2,7 +2,7 @@
 
 A local-only Flask web application for managing employee records and pay raise data.
 
-This project started as a class assignment and has been expanded into a more polished local database app with shared templates, styling, employee search, pay raise filtering, employee editing, role-based access control, encrypted database fields, and TCP socket messaging demos.
+This project started as a class assignment and has been expanded into a more polished local database app with shared templates, styling, employee search, pay raise filtering, employee editing, role-based access control, password hashing, encrypted database fields, and TCP socket messaging demos.
 
 ## Tech Stack
 
@@ -10,7 +10,7 @@ This project started as a class assignment and has been expanded into a more pol
 - **Database**: SQLite
 - **Templates**: HTML + Jinja2
 - **Styling**: CSS
-- **Authentication**: Flask sessions
+- **Authentication**: Flask sessions + Werkzeug password hashing
 - **Authorization**: Role-based security levels
 - **Encryption**: AES via PyCryptodome
 - **Networking**: Python sockets + TCP servers
@@ -32,6 +32,7 @@ It is **not intended for public internet deployment** without additional securit
 ## Features
 
 - User login system with Flask sessions
+- Passwords stored using Werkzeug password hashing
 - Role-based access control using employee security levels
 - Add new employee records
 - Edit existing employee records
@@ -157,7 +158,8 @@ Browser  -->  Flask App  -->  encrypted + HMAC socket message
 
 - Flask handles routing, login, sessions, validation, and page rendering.
 - SQLite stores employee and pay raise records locally.
-- AES encryption is used for selected stored values.
+- Passwords are stored as one-way hashes using Werkzeug password hashing.
+- AES encryption is used for selected stored values, such as names, phone numbers, and pay raise amounts.
 - Role-based security levels control which pages users can access.
 - Socket servers demonstrate encrypted client/server communication.
 - HMAC validation helps verify that add-pay-raise messages were not tampered with.
@@ -170,7 +172,7 @@ Browser  -->  Flask App  -->  encrypted + HMAC socket message
 | GET | `/logout` | Yes | Log out current user |
 | GET | `/` | Yes | Home page with navigation links |
 | GET | `/addemployee` | Yes, Level 1 | Show add employee form |
-| POST | `/addrec` | Yes, Level 1 | Create a new employee |
+| POST | `/addrec` | Yes, Level 1 | Create a new employee with a hashed password |
 | GET | `/listemployees` | Yes, Level 1 or 2 | List and search employee records |
 | GET / POST | `/editemployee/<user_id>` | Yes, Level 1 | Edit an employee record |
 | GET | `/listpayraises` | Yes, Level 2 | List and filter all pay raise records |
@@ -212,15 +214,16 @@ flask-employee-manager/
 
 This project uses sample employee and pay raise records for demonstration purposes only. The setup script creates a local SQLite database and seeds it with fake employee data for testing.
 
+The seeded demo accounts all use the password `test123`, but the application stores those passwords as hashes rather than reversible encrypted values.
+
 No real employee data should be stored in this project without additional security improvements.
 
 ## Security Notice
 
-This project demonstrates several security concepts, including role-based access control, encrypted database fields, encrypted socket messaging, and HMAC message authentication.
+This project demonstrates several security concepts, including role-based access control, password hashing, encrypted database fields, encrypted socket messaging, and HMAC message authentication.
 
 However, it is still a local educational/demo application. It is not production-ready without additional changes such as:
 
-- Password hashing instead of reversible password encryption
 - Moving secrets and encryption keys out of source code
 - CSRF protection for forms
 - Safer database setup scripts that do not reset data accidentally
