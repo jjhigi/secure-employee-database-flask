@@ -178,10 +178,12 @@ def addrec():
 # --------------------------
 @app.route("/listemployees")
 def listemployees():
-    """List all employees, decrypting sensitive fields."""
+    """List employees, with optional search by name, user ID, or security level."""
     guard = require_level({1, 2})
     if guard:
         return guard
+
+    search = request.args.get("search", "").strip()
 
     with get_db() as con:
         con.row_factory = sql.Row
@@ -191,16 +193,28 @@ def listemployees():
 
     decrypted = []
     for r in rows:
-        decrypted.append({
+        employee = {
             "UserID": r["UserID"],
             "Name": dec(r["Name"]),
             "Age": r["Age"],
             "PhNum": dec(r["PhNum"]),
             "SecurityLevel": r["SecurityLevel"],
             "LoginPassword": dec(r["LoginPassword"]),
-        })
+        }
 
-    return render_template("listemployees.html", rows=decrypted)
+        if search:
+            search_lower = search.lower()
+
+            matches_name = search_lower in employee["Name"].lower()
+            matches_user_id = search_lower in str(employee["UserID"]).lower()
+            matches_security_level = search_lower in str(employee["SecurityLevel"]).lower()
+
+            if matches_name or matches_user_id or matches_security_level:
+                decrypted.append(employee)
+        else:
+            decrypted.append(employee)
+
+    return render_template("listemployees.html", rows=decrypted, search=search)
 
 
 # --------------------------

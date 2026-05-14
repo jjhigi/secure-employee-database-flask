@@ -109,3 +109,19 @@ tr:first-child {
   border-left: 4px solid #555;
   margin-top: 15px;
 }
+
+.search-form {
+  max-width: 600px;
+  margin-bottom: 20px;
+}
+
+.search-form input[type="text"] {
+  margin-right: 8px;
+  margin-bottom: 10px;
+}
+
+.search-form a {
+  margin-left: 10px;
+  color: #1f2937;
+  font-weight: bold;
+}
