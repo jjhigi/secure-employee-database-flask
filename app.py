@@ -303,6 +303,64 @@ def editemployee(user_id):
 
 
 # --------------------------
+# Reset Employee Password (Admin only)
+# --------------------------
+@app.route("/resetpassword/<int:user_id>", methods=["GET", "POST"])
+def resetpassword(user_id):
+    """Reset an employee password by storing a new password hash. Admin only."""
+    guard = require_level({1})
+    if guard:
+        return guard
+
+    with get_db() as con:
+        con.row_factory = sql.Row
+        cur = con.cursor()
+
+        cur.execute(
+            "SELECT UserID, Name FROM Employee WHERE UserID=?",
+            (user_id,),
+        )
+        row = cur.fetchone()
+
+        if not row:
+            return render_template("result.html", msg="Employee not found.")
+
+        employee = {
+            "UserID": row["UserID"],
+            "Name": dec(row["Name"]),
+        }
+
+        if request.method == "POST":
+            password = request.form.get("Password", "").strip()
+            confirm_password = request.form.get("ConfirmPassword", "").strip()
+
+            errors = []
+
+            if not password:
+                errors.append("Password cannot be empty.")
+
+            if password != confirm_password:
+                errors.append("Passwords do not match.")
+
+            if errors:
+                return render_template("result.html", msg=", ".join(errors))
+
+            cur.execute(
+                """
+                UPDATE Employee
+                SET PasswordHash=?
+                WHERE UserID = ?
+                """,
+                (generate_password_hash(password), user_id),
+            )
+            con.commit()
+
+            return render_template("result.html", msg="Password reset successfully.")
+
+    return render_template("resetpassword.html", employee=employee)
+
+
+# --------------------------
 # Deactivate Employee (Admin only)
 # --------------------------
 @app.route("/deactivateemployee/<int:user_id>", methods=["POST"])

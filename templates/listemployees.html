@@ -38,6 +38,7 @@
         <td>{{ row["Status"] }}</td>
         <td>
             <a href="/editemployee/{{ row['UserID'] }}">Edit</a>
+            <a href="/resetpassword/{{ row['UserID'] }}">Reset Password</a>
 
             {% if row["IsActive"] == 1 %}
             <form method="post" action="/deactivateemployee/{{ row['UserID'] }}" class="inline-form">

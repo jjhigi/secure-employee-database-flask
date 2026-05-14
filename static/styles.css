@@ -135,3 +135,7 @@ tr:first-child {
     padding: 5px 10px;
     font-size: 0.9rem;
 }
+
+td a {
+  margin-right: 8px;
+}
