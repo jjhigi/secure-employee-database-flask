@@ -21,9 +21,9 @@ app.secret_key = "dev-secret-key"
 # --------------------------
 # HMAC / socket constants
 # --------------------------
-HMAC_SECRET = b"1234"        # shared secret between client and server
-HMAC_TAG_LEN = 64            # sha3_512 digests are 64 bytes
-HMAC_SEPARATOR = "^%$"       # separator between fields in the message
+HMAC_SECRET = b"1234"  # shared secret between client and server
+HMAC_TAG_LEN = 64  # sha3_512 digests are 64 bytes
+HMAC_SEPARATOR = "^%$"  # separator between fields in the message
 HMAC_HOST = "localhost"
 HMAC_PORT = 8888
 
@@ -80,7 +80,7 @@ def home():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    """Log in user by matching encrypted username and password."""
+    """Log in user by matching encrypted username and verifying the password hash."""
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
@@ -96,7 +96,11 @@ def login():
             )
             row = cur.fetchone()
 
-        if row and check_password_hash(row["PasswordHash"], password):
+        if (
+                row
+                and row["IsActive"] == 1
+                and check_password_hash(row["PasswordHash"], password)
+        ):
             # Store decrypted name and security level in the session
             session.clear()
             session["UserID"] = row["UserID"]
@@ -178,7 +182,7 @@ def addrec():
 # --------------------------
 @app.route("/listemployees")
 def listemployees():
-    """List employees, with optional search by name, user ID, or security level."""
+    """List employees, with optional search by name, user ID, security level, or status."""
     guard = require_level({1, 2})
     if guard:
         return guard
@@ -199,6 +203,8 @@ def listemployees():
             "Age": r["Age"],
             "PhNum": dec(r["PhNum"]),
             "SecurityLevel": r["SecurityLevel"],
+            "IsActive": r["IsActive"],
+            "Status": "Active" if r["IsActive"] == 1 else "Inactive",
         }
 
         if search:
@@ -206,9 +212,17 @@ def listemployees():
 
             matches_name = search_lower in employee["Name"].lower()
             matches_user_id = search_lower in str(employee["UserID"]).lower()
-            matches_security_level = search_lower in str(employee["SecurityLevel"]).lower()
+            matches_security_level = (
+                    search_lower in str(employee["SecurityLevel"]).lower()
+            )
+            matches_status = search_lower in employee["Status"].lower()
 
-            if matches_name or matches_user_id or matches_security_level:
+            if (
+                    matches_name
+                    or matches_user_id
+                    or matches_security_level
+                    or matches_status
+            ):
                 decrypted.append(employee)
         else:
             decrypted.append(employee)
@@ -216,6 +230,9 @@ def listemployees():
     return render_template("listemployees.html", rows=decrypted, search=search)
 
 
+# --------------------------
+# Edit Employee (Admin only)
+# --------------------------
 @app.route("/editemployee/<int:user_id>", methods=["GET", "POST"])
 def editemployee(user_id):
     """Edit an existing employee record. Admin only."""
@@ -262,8 +279,11 @@ def editemployee(user_id):
             cur.execute(
                 """
                 UPDATE Employee
-                SET Name=?, Age=?, PhNum=?, SecurityLevel=?
-                WHERE UserID=?
+                SET Name=?,
+                    Age=?,
+                    PhNum=?,
+                    SecurityLevel=?
+                WHERE UserID = ?
                 """,
                 (enc(nm), int(ag), enc(ph), int(lvl), user_id),
             )
@@ -280,6 +300,51 @@ def editemployee(user_id):
     }
 
     return render_template("editemployee.html", employee=employee)
+
+
+# --------------------------
+# Deactivate Employee (Admin only)
+# --------------------------
+@app.route("/deactivateemployee/<int:user_id>", methods=["POST"])
+def deactivateemployee(user_id):
+    """Mark an employee as inactive. Admin only."""
+    guard = require_level({1})
+    if guard:
+        return guard
+
+    if session.get("UserID") == user_id:
+        return render_template("result.html", msg="You cannot deactivate your own account.")
+
+    with get_db() as con:
+        cur = con.cursor()
+        cur.execute(
+            "UPDATE Employee SET IsActive=0 WHERE UserID=?",
+            (user_id,),
+        )
+        con.commit()
+
+    return redirect(url_for("listemployees"))
+
+
+# --------------------------
+# Reactivate Employee (Admin only)
+# --------------------------
+@app.route("/reactivateemployee/<int:user_id>", methods=["POST"])
+def reactivateemployee(user_id):
+    """Mark an employee as active again. Admin only."""
+    guard = require_level({1})
+    if guard:
+        return guard
+
+    with get_db() as con:
+        cur = con.cursor()
+        cur.execute(
+            "UPDATE Employee SET IsActive=1 WHERE UserID=?",
+            (user_id,),
+        )
+        con.commit()
+
+    return redirect(url_for("listemployees"))
 
 
 # --------------------------

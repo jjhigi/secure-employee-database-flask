@@ -24,7 +24,8 @@ def create_tables():
             Age INTEGER NOT NULL,
             PhNum TEXT NOT NULL,
             SecurityLevel INTEGER NOT NULL,
-            PasswordHash TEXT NOT NULL
+            PasswordHash TEXT NOT NULL,
+            IsActive INTEGER NOT NULL DEFAULT 1
         )
         """
     )

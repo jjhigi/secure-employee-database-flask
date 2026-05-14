@@ -11,7 +11,6 @@ import sqlite3
 import Encryption
 from werkzeug.security import generate_password_hash
 
-
 DB_NAME = "EmployeeDB.db"
 
 
@@ -85,7 +84,7 @@ def seed_demo_data():
     print("Demo credentials for local testing:")
     print("UserID | Name       | SecurityLevel | Password")
     for row in cur.execute(
-        "SELECT UserID, Name, SecurityLevel FROM Employee"
+            "SELECT UserID, Name, SecurityLevel FROM Employee"
     ):
         user_id = row[0]
         name = dec(row[1])

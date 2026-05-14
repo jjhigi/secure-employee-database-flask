@@ -11,7 +11,6 @@ import sqlite3
 import Encryption
 from werkzeug.security import generate_password_hash
 
-
 DB_NAME = "EmployeeDB.db"
 
 
@@ -41,13 +40,15 @@ def reset_demo_database():
 
     cur.execute(
         """
-        CREATE TABLE Employee(
-            UserID INTEGER PRIMARY KEY AUTOINCREMENT,
-            Name TEXT NOT NULL,
-            Age INTEGER NOT NULL,
-            PhNum TEXT NOT NULL,
+        CREATE TABLE Employee
+        (
+            UserID        INTEGER PRIMARY KEY AUTOINCREMENT,
+            Name          TEXT    NOT NULL,
+            Age           INTEGER NOT NULL,
+            PhNum         TEXT    NOT NULL,
             SecurityLevel INTEGER NOT NULL,
-            PasswordHash TEXT NOT NULL
+            PasswordHash  TEXT    NOT NULL,
+            IsActive      INTEGER NOT NULL DEFAULT 1
         )
         """
     )
@@ -55,12 +56,13 @@ def reset_demo_database():
 
     cur.execute(
         """
-        CREATE TABLE EmpPayRaise(
-            PayRaiseID INTEGER PRIMARY KEY AUTOINCREMENT,
-            EmpID INTEGER NOT NULL,
-            PayRaiseDate TEXT NOT NULL,
-            RaiseAmt TEXT NOT NULL,
-            FOREIGN KEY (EmpID) REFERENCES Employee(UserID)
+        CREATE TABLE EmpPayRaise
+        (
+            PayRaiseID   INTEGER PRIMARY KEY AUTOINCREMENT,
+            EmpID        INTEGER NOT NULL,
+            PayRaiseDate TEXT    NOT NULL,
+            RaiseAmt     TEXT    NOT NULL,
+            FOREIGN KEY (EmpID) REFERENCES Employee (UserID)
         )
         """
     )
@@ -108,7 +110,7 @@ def reset_demo_database():
     print("Demo credentials for local testing:")
     print("UserID | Name       | SecurityLevel | Password")
     for row in cur.execute(
-        "SELECT UserID, Name, SecurityLevel FROM Employee"
+            "SELECT UserID, Name, SecurityLevel FROM Employee"
     ):
         user_id = row[0]
         name = dec(row[1])
