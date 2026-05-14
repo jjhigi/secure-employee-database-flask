@@ -24,6 +24,7 @@
         <td>Age</td>
         <td>Phone Number</td>
         <td>Security Level</td>
+        <td>Actions</td>
       </tr>
 
       {% for row in rows %}
@@ -33,6 +34,9 @@
           <td>{{ row["Age"] }}</td>
           <td>{{ row["PhNum"] }}</td>
           <td>{{ row["SecurityLevel"] }}</td>
+          <td>
+            <a href="/editemployee/{{ row['UserID'] }}">Edit</a>
+          </td>
         </tr>
       {% endfor %}
     </table>

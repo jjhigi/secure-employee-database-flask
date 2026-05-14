@@ -216,6 +216,72 @@ def listemployees():
     return render_template("listemployees.html", rows=decrypted, search=search)
 
 
+@app.route("/editemployee/<int:user_id>", methods=["GET", "POST"])
+def editemployee(user_id):
+    """Edit an existing employee record. Admin only."""
+    guard = require_level({1})
+    if guard:
+        return guard
+
+    with get_db() as con:
+        con.row_factory = sql.Row
+        cur = con.cursor()
+
+        cur.execute(
+            "SELECT * FROM Employee WHERE UserID=?",
+            (user_id,),
+        )
+        row = cur.fetchone()
+
+        if not row:
+            return render_template("result.html", msg="Employee not found.")
+
+        if request.method == "POST":
+            nm = request.form.get("Name", "").strip()
+            ag = request.form.get("Age", "").strip()
+            ph = request.form.get("PhNum", "").strip()
+            lvl = request.form.get("SecurityLevel", "").strip()
+
+            errors = []
+
+            if not nm:
+                errors.append("Name cannot be empty.")
+
+            if not ag.isdigit() or not (1 <= int(ag) <= 120):
+                errors.append("Age must be 1-120.")
+
+            if not ph:
+                errors.append("Phone number cannot be empty.")
+
+            if not lvl.isdigit() or not (1 <= int(lvl) <= 3):
+                errors.append("Security Level must be 1-3.")
+
+            if errors:
+                return render_template("result.html", msg=", ".join(errors))
+
+            cur.execute(
+                """
+                UPDATE Employee
+                SET Name=?, Age=?, PhNum=?, SecurityLevel=?
+                WHERE UserID=?
+                """,
+                (enc(nm), int(ag), enc(ph), int(lvl), user_id),
+            )
+            con.commit()
+
+            return redirect(url_for("listemployees"))
+
+    employee = {
+        "UserID": row["UserID"],
+        "Name": dec(row["Name"]),
+        "Age": row["Age"],
+        "PhNum": dec(row["PhNum"]),
+        "SecurityLevel": row["SecurityLevel"],
+    }
+
+    return render_template("editemployee.html", employee=employee)
+
+
 # --------------------------
 # List Pay Raises (Level 2)
 # --------------------------
