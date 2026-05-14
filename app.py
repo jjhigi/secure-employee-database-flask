@@ -7,6 +7,7 @@ and socket-based pay raise operations.
 """
 
 from flask import Flask, abort, render_template, request, redirect, url_for, session, flash
+from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3 as sql
 from datetime import datetime
 import Encryption
@@ -85,18 +86,17 @@ def login():
         password = request.form.get("password", "")
 
         enc_name = enc(username)
-        enc_pwd = enc(password)
 
         with get_db() as con:
             con.row_factory = sql.Row
             cur = con.cursor()
             cur.execute(
-                "SELECT * FROM Employee WHERE Name=? AND LoginPassword=?",
-                (enc_name, enc_pwd),
+                "SELECT * FROM Employee WHERE Name=?",
+                (enc_name,),
             )
             row = cur.fetchone()
 
-        if row:
+        if row and check_password_hash(row["PasswordHash"], password):
             # Store decrypted name and security level in the session
             session.clear()
             session["UserID"] = row["UserID"]
@@ -141,7 +141,7 @@ def addrec():
     ag = request.form.get("Age", "").strip()
     ph = request.form.get("PhNum", "").strip()
     lvl = request.form.get("SecurityLevel", "").strip()
-    pwd = request.form.get("LoginPassword", "").strip()
+    pwd = request.form.get("Password", "").strip()
 
     errors = []
     if not nm:
@@ -163,10 +163,10 @@ def addrec():
         cur = con.cursor()
         cur.execute(
             """
-            INSERT INTO Employee (Name, Age, PhNum, SecurityLevel, LoginPassword)
+            INSERT INTO Employee (Name, Age, PhNum, SecurityLevel, PasswordHash)
             VALUES (?, ?, ?, ?, ?)
             """,
-            (enc(nm), int(ag), enc(ph), int(lvl), enc(pwd)),
+            (enc(nm), int(ag), enc(ph), int(lvl), generate_password_hash(pwd)),
         )
         con.commit()
 

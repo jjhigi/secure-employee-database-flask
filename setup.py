@@ -8,6 +8,7 @@ sample encrypted employee and pay raise records for testing.
 
 import sqlite3
 import Encryption
+from werkzeug.security import generate_password_hash
 
 # --------------------------
 # Helper encryption functions
@@ -41,8 +42,9 @@ except Exception:
 
 # --------------------------
 # Create Employee table
-# UserID, Name, Age, PhNum, SecurityLevel, LoginPassword
-# Name, PhNum, LoginPassword are stored as encrypted text
+# UserID, Name, Age, PhNum, SecurityLevel, PasswordHash
+# Name and PhNum are stored as encrypted text.
+# PasswordHash stores a one-way password hash.
 # --------------------------
 cur.execute(
     """
@@ -52,7 +54,7 @@ cur.execute(
         Age    INTEGER NOT NULL,
         PhNum  TEXT NOT NULL,
         SecurityLevel INTEGER NOT NULL,
-        LoginPassword TEXT NOT NULL
+        PasswordHash TEXT NOT NULL
     )
     """
 )
@@ -92,10 +94,10 @@ employees = [
 for name, age, ph, level, pwd in employees:
     cur.execute(
         """
-        INSERT INTO Employee (Name, Age, PhNum, SecurityLevel, LoginPassword)
+        INSERT INTO Employee (Name, Age, PhNum, SecurityLevel, PasswordHash)
         VALUES (?, ?, ?, ?, ?)
         """,
-        (enc(name), age, enc(ph), level, enc(pwd)),
+        (enc(name), age, enc(ph), level, generate_password_hash(pwd)),
     )
 
 # --------------------------
@@ -136,19 +138,15 @@ for row in cur.execute("SELECT * FROM EmpPayRaise"):
     print(row)
 
 # --------------------------
-# Decrypted Username / Password / SecurityLevel
+# Demo Login Credentials
 # --------------------------
 print()
-print("Decrypted credentials for testing (Username, Password, SecurityLevel):")
-print("UserID | Name       | SecurityLevel | LoginPassword")
+print("Demo credentials for local testing:")
+print("UserID | Name       | SecurityLevel | Password")
 for row in cur.execute(
-    "SELECT UserID, Name, SecurityLevel, LoginPassword FROM Employee"
+    "SELECT UserID, Name, SecurityLevel FROM Employee"
 ):
     user_id = row[0]
     name = dec(row[1])
     level = row[2]
-    pwd = dec(row[3])
-    print(f"{user_id:6} | {name:10} | {level:13} | {pwd}")
-
-conn.close()
-print("Connection closed.")
+    print(f"{user_id:6} | {name:10} | {level:13} | test123")
