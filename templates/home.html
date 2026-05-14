@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h2>Welcome {{ name }}</h2>
+<h2>Welcome {{ name }}</h2>
 
-  {% if session.get('UserID') %}
-    <p>Select an option from the navigation menu above.</p>
-  {% else %}
-    <p>Not logged in.</p>
-    <a href="/login">Go to Login</a>
-  {% endif %}
+{% if session.get('UserID') %}
+<p>Select an option from the navigation menu above.</p>
+{% else %}
+<p>Not logged in.</p>
+<a href="/login">Go to Login</a>
+{% endif %}
 {% endblock %}

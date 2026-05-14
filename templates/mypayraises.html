@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h2>My Pay Raises</h2>
+<h2>My Pay Raises</h2>
 
-  <table border="1">
+<table border="1">
     <tr>
-      <td>Pay Raise Date</td>
-      <td>Raise Amount</td>
+        <td>Pay Raise Date</td>
+        <td>Raise Amount</td>
     </tr>
 
     {% for row in rows %}
-      <tr>
+    <tr>
         <td>{{ row["PayRaiseDate"] }}</td>
         <td>{{ row["RaiseAmt"] }}</td>
-      </tr>
+    </tr>
     {% endfor %}
-  </table>
+</table>
 {% endblock %}

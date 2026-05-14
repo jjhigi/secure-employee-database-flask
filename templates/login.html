@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 
 {% block content %}
-  {% with msgs = get_flashed_messages() %}
-    {% if msgs %}
-      <p>{{ msgs[0] }}</p>
-    {% endif %}
-  {% endwith %}
+{% with msgs = get_flashed_messages() %}
+{% if msgs %}
+<p>{{ msgs[0] }}</p>
+{% endif %}
+{% endwith %}
 
-  <h2>Login</h2>
+<h2>Login</h2>
 
-  <form method="post" action="/login">
+<form method="post" action="/login">
     <label>Username:</label><br>
     <input type="text" name="username"><br><br>
 
@@ -17,6 +17,6 @@
     <input type="password" name="password"><br><br>
 
     <input type="submit" value="Login">
-  </form>
+</form>
 {% endblock %}
 

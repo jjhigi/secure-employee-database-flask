@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h2>Submit Pay Raise Deletion Request</h2>
+<h2>Submit Pay Raise Deletion Request</h2>
 
-  <form method="post" action="/submitdeletepayraise">
+<form method="post" action="/submitdeletepayraise">
     <label>Employee ID:</label><br>
     <input type="number" name="EmpID" required><br><br>
 
@@ -11,5 +11,5 @@
     <input type="date" name="PayRaiseDate" required><br><br>
 
     <input type="submit" value="Submit">
-  </form>
+</form>
 {% endblock %}

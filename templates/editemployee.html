@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h2>Edit Employee</h2>
+<h2>Edit Employee</h2>
 
-  <form method="post" action="/editemployee/{{ employee['UserID'] }}">
+<form method="post" action="/editemployee/{{ employee['UserID'] }}">
     <label>Name:</label><br>
     <input type="text" name="Name" value="{{ employee['Name'] }}"><br><br>
 
@@ -17,5 +17,5 @@
     <input type="text" name="SecurityLevel" value="{{ employee['SecurityLevel'] }}"><br><br>
 
     <input type="submit" value="Save Changes">
-  </form>
+</form>
 {% endblock %}

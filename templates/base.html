@@ -1,43 +1,43 @@
 <!doctype html>
 <html>
-  <head>
+<head>
     <title>Flask Employee Manager</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-  </head>
+</head>
 
-  <body>
-    <header>
-      <h1>Flask Employee Manager</h1>
+<body>
+<header>
+    <h1>Flask Employee Manager</h1>
 
-      {% if session.get('UserID') %}
-        <p class="user-status">Logged in as {{ session.get('name') }}</p>
+    {% if session.get('UserID') %}
+    <p class="user-status">Logged in as {{ session.get('name') }}</p>
 
-        <nav>
-          <a href="/">Home</a>
-          <a href="/mypayraises">My Pay Raises</a>
-          <a href="/addpayraise">Add Pay Raise</a>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/mypayraises">My Pay Raises</a>
+        <a href="/addpayraise">Add Pay Raise</a>
 
-          {% if session.get('SecurityLevel') == 1 %}
-            <a href="/addemployee">Add Employee</a>
-            <a href="/listemployees">List Employees</a>
-          {% elif session.get('SecurityLevel') == 2 %}
-            <a href="/listemployees">List Employees</a>
-            <a href="/listpayraises">List Pay Raises</a>
-          {% endif %}
+        {% if session.get('SecurityLevel') == 1 %}
+        <a href="/addemployee">Add Employee</a>
+        <a href="/listemployees">List Employees</a>
+        {% elif session.get('SecurityLevel') == 2 %}
+        <a href="/listemployees">List Employees</a>
+        <a href="/listpayraises">List Pay Raises</a>
+        {% endif %}
 
-          {% if session.get('SecurityLevel') <= 2 %}
-            <a href="/submitdeletepayraise">Delete Pay Raise Request</a>
-          {% endif %}
+        {% if session.get('SecurityLevel') <= 2 %}
+        <a href="/submitdeletepayraise">Delete Pay Raise Request</a>
+        {% endif %}
 
-          <a href="/sendaddpayraisehmac">HMAC Add Pay Raise</a>
-          <a href="/logout">Log Out</a>
-        </nav>
-      {% endif %}
-    </header>
+        <a href="/sendaddpayraisehmac">HMAC Add Pay Raise</a>
+        <a href="/logout">Log Out</a>
+    </nav>
+    {% endif %}
+</header>
 
-    <main>
-      {% block content %}
-      {% endblock %}
-    </main>
-  </body>
+<main>
+    {% block content %}
+    {% endblock %}
+</main>
+</body>
 </html>
