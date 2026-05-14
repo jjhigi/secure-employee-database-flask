@@ -3,21 +3,64 @@
 {% block content %}
   <h2>Pay Raise Records</h2>
 
-  <table border="1">
-    <tr>
-      <td>Pay Raise ID</td>
-      <td>Employee ID</td>
-      <td>Pay Raise Date</td>
-      <td>Raise Amount</td>
-    </tr>
+  <form method="get" action="/listpayraises" class="filter-form">
+    <label for="emp_id">Employee ID:</label><br>
+    <input
+      type="text"
+      id="emp_id"
+      name="emp_id"
+      value="{{ emp_id_filter }}"
+      placeholder="Example: 1"
+    ><br><br>
 
-    {% for row in rows %}
+    <label for="start_date">Start Date:</label><br>
+    <input
+      type="date"
+      id="start_date"
+      name="start_date"
+      value="{{ start_date_filter }}"
+    ><br><br>
+
+    <label for="end_date">End Date:</label><br>
+    <input
+      type="date"
+      id="end_date"
+      name="end_date"
+      value="{{ end_date_filter }}"
+    ><br><br>
+
+    <label for="min_amount">Minimum Raise Amount:</label><br>
+    <input
+      type="text"
+      id="min_amount"
+      name="min_amount"
+      value="{{ min_amount_filter }}"
+      placeholder="Example: 100"
+    ><br><br>
+
+    <input type="submit" value="Filter">
+    <a href="/listpayraises">Clear</a>
+  </form>
+
+  {% if rows %}
+    <table border="1">
       <tr>
-        <td>{{ row["PayRaiseID"] }}</td>
-        <td>{{ row["EmpID"] }}</td>
-        <td>{{ row["PayRaiseDate"] }}</td>
-        <td>{{ row["RaiseAmt"] }}</td>
+        <td>Pay Raise ID</td>
+        <td>Employee ID</td>
+        <td>Pay Raise Date</td>
+        <td>Raise Amount</td>
       </tr>
-    {% endfor %}
-  </table>
+
+      {% for row in rows %}
+        <tr>
+          <td>{{ row["PayRaiseID"] }}</td>
+          <td>{{ row["EmpID"] }}</td>
+          <td>{{ row["PayRaiseDate"] }}</td>
+          <td>{{ row["RaiseAmt"] }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p>No pay raise records found.</p>
+  {% endif %}
 {% endblock %}
