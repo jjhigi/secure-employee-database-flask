@@ -24,7 +24,6 @@
         <td>Age</td>
         <td>Phone Number</td>
         <td>Security Level</td>
-        <td>Login Password</td>
       </tr>
 
       {% for row in rows %}
@@ -34,7 +33,6 @@
           <td>{{ row["Age"] }}</td>
           <td>{{ row["PhNum"] }}</td>
           <td>{{ row["SecurityLevel"] }}</td>
-          <td>{{ row["LoginPassword"] }}</td>
         </tr>
       {% endfor %}
     </table>

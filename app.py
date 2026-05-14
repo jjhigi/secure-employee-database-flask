@@ -199,7 +199,6 @@ def listemployees():
             "Age": r["Age"],
             "PhNum": dec(r["PhNum"]),
             "SecurityLevel": r["SecurityLevel"],
-            "LoginPassword": dec(r["LoginPassword"]),
         }
 
         if search:
