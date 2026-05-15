@@ -6,15 +6,30 @@ Handles login, role-based access control, encrypted database fields,
 and socket-based pay raise operations.
 """
 
-from flask import Flask, abort, render_template, request, redirect, url_for, session, flash
-from werkzeug.security import generate_password_hash, check_password_hash
+# Standard library imports
+import hashlib
+import hmac
+import os
+import socket
 import sqlite3 as sql
 from datetime import datetime
+
+# Flask/third-party imports
+from flask import (
+    Flask,
+    abort,
+    flash,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
+from flask_wtf.csrf import CSRFProtect
+from werkzeug.security import check_password_hash, generate_password_hash
+
+# Local imports
 import Encryption
-import socket
-import hmac
-import hashlib
-import os
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key-local-only")
@@ -23,6 +38,8 @@ app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
 )
+
+csrf = CSRFProtect(app)
 
 # --------------------------
 # HMAC / socket constants

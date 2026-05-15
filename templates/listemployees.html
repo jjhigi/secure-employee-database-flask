@@ -42,10 +42,12 @@
 
             {% if row["IsActive"] == 1 %}
             <form method="post" action="/deactivateemployee/{{ row['UserID'] }}" class="inline-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="submit" value="Deactivate">
             </form>
             {% else %}
             <form method="post" action="/reactivateemployee/{{ row['UserID'] }}" class="inline-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="submit" value="Reactivate">
             </form>
             {% endif %}

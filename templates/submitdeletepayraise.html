@@ -4,6 +4,7 @@
 <h2>Submit Pay Raise Deletion Request</h2>
 
 <form method="post" action="/submitdeletepayraise">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>Employee ID:</label><br>
     <input type="number" name="EmpID" required><br><br>
 

@@ -4,6 +4,7 @@
 <h2>Send HMAC-Authenticated Pay Raise Message</h2>
 
 <form method="post" action="/sendaddpayraisehmac">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label for="EmpId">Employee ID:</label><br>
     <input type="text" id="EmpId" name="EmpID"><br><br>
 

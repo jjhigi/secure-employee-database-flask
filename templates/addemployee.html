@@ -4,6 +4,7 @@
 <h2>Add a New Employee</h2>
 
 <form action="/addrec" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>Name:</label><br>
     <input type="text" name="Name"><br><br>
 
