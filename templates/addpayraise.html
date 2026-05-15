@@ -4,6 +4,7 @@
 <h2>Add Pay Raise</h2>
 
 <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>Pay Raise Date:</label><br>
     <input type="date" name="PayRaiseDate" required><br><br>
 
