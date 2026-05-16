@@ -9,7 +9,6 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 
-
 DB_NAME = "EmployeeDB.db"
 BACKUP_DIR = "backups"
 
