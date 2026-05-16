@@ -1,8 +1,10 @@
 # Flask Employee Manager
 
-A local-only Flask web application for managing employee records and pay raise data.
+A Flask web application for managing employee records and pay raise data.
 
-This project started as a class assignment and has been expanded into a more polished local database app with shared templates, styling, employee search, pay raise filtering, employee editing, employee deactivation/reactivation, admin password reset, password hashing, encrypted database fields, safer database setup scripts, and TCP socket messaging demos.
+This project is meant as an exercise in **databases and database security**. 
+
+The long-term goal is a very secure **local employee database** that runs on a single admin computer. It is not intended to be enterprise HR software or a public internet-facing application, but it is being developed with practical local security and usability in mind.
 
 ## Tech Stack
 
@@ -15,19 +17,35 @@ This project started as a class assignment and has been expanded into a more pol
 - **Encryption**: AES via PyCryptodome
 - **Networking**: Python sockets + TCP servers
 - **Message Authentication**: HMAC with SHA3-512
+- **Form Protection**: Flask-WTF CSRF protection
 
-## Project Scope
+## Current Security Features
 
-This project is designed as a **local-only Flask application** that runs on the same PC as the SQLite database.
+- Passwords are stored using Werkzeug password hashing
+- Employee passwords are never displayed in the application
+- Admin users can reset employee passwords without viewing existing passwords
+- Inactive employee accounts are blocked from logging in
+- Role-based access control restricts pages by employee security level
+- Selected employee and pay raise fields are stored with AES encryption
+- Form submissions are protected with CSRF tokens using Flask-WTF
+- Flask debug mode is controlled by an environment variable
+- The Flask secret key can be loaded from an environment variable
+- Session cookies are configured with `HttpOnly` and `SameSite=Lax`
+- Database setup scripts separate initialization, demo seeding, and intentional resets
+- Encrypted TCP socket messages are used for pay raise deletion
+- HMAC-authenticated encrypted TCP socket messages are used for pay raise creation
 
-It is intended for:
+## Security Features Still To Be Implemented
 
-- Local development
-- Portfolio demonstration
-- Small-scale record management practice
-- Learning Flask, SQLite, authentication, authorization, encryption, and socket messaging
-
-It is **not intended for public internet deployment** without additional security hardening.
+- Move AES and HMAC keys fully out of source code
+- Improve AES key and IV/nonce handling
+- Add a backup/export process for local database files
+- Add password change support for logged-in users
+- Add audit logging for administrative actions
+- Improve error handling and user feedback
+- Add more complete input validation and field length limits
+- Add deployment documentation for any future non-local use
+- Replace the Flask development server with a production WSGI server if the project is ever adapted beyond local-only use
 
 ## Features
 
@@ -48,15 +66,6 @@ It is **not intended for public internet deployment** without additional securit
 - Filter pay raise records by employee ID, date range, and minimum amount
 - Show pay raises for the currently logged-in user
 - Store pay raise amounts using AES encryption
-
-### Security and Access Control
-
-- User login system with Flask sessions
-- Passwords stored using Werkzeug password hashing
-- Role-based access control using employee security levels
-- Selected employee and pay raise fields stored with AES encryption
-- HMAC-authenticated encrypted socket message for pay raise creation
-- Encrypted socket message for pay raise deletion
 
 ### Project Structure and Usability
 
@@ -255,21 +264,7 @@ flask-employee-manager/
 
 This project uses sample employee and pay raise records for demonstration purposes only. The demo seed script creates fake employee data for local testing.
 
-The seeded demo accounts all use the password `test123`, but the application stores those passwords as hashes rather than reversible encrypted values.
-
-No real employee data should be stored in this project without additional security improvements.
-
-## Security Notice
-
-This project demonstrates several security concepts, including role-based access control, password hashing, encrypted database fields, encrypted socket messaging, and HMAC message authentication.
-
-However, it is still a local educational/demo application. It is not production-ready without additional changes such as:
-
-- Moving secrets and encryption keys out of source code
-- CSRF protection for forms
-- Stronger key and IV/nonce handling for encryption
-- Debug mode disabled outside development
-- More complete logging, backup, and account management controls
+The seeded demo accounts all use the password `test123`, and the application stores those passwords as hashes.
 
 ## Author
 
