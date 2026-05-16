@@ -2,9 +2,9 @@
 
 A Flask web application for managing employee records and pay raise data.
 
-This project is meant as an exercise in **databases and database security**. 
+This project is meant as an exercise in **databases and database security**. It uses a small employee/pay-raise database to explore authentication, authorization, password hashing, encrypted fields, CSRF protection, local database backups, safer database setup, protected form submissions, and authenticated socket messaging.
 
-The long-term goal is a very secure **local employee database** that runs on a single admin computer. It is not intended to be enterprise HR software or a public internet-facing application, but it is being developed with practical local security and usability in mind.
+The end goal is a very secure **local employee database** that runs on a single admin computer. It is not intended to be enterprise HR software or a public internet-facing application, but it is being developed with practical local security and usability in mind.
 
 ## Tech Stack
 
@@ -18,6 +18,7 @@ The long-term goal is a very secure **local employee database** that runs on a s
 - **Networking**: Python sockets + TCP servers
 - **Message Authentication**: HMAC with SHA3-512
 - **Form Protection**: Flask-WTF CSRF protection
+- **Configuration**: python-dotenv environment configuration
 
 ## Current Security Features
 
@@ -29,17 +30,17 @@ The long-term goal is a very secure **local employee database** that runs on a s
 - Selected employee and pay raise fields are stored with AES encryption
 - Form submissions are protected with CSRF tokens using Flask-WTF
 - Flask debug mode is controlled by an environment variable
-- The Flask secret key can be loaded from an environment variable
+- Flask secret key, AES settings, and HMAC secret are loaded from local environment configuration
 - Session cookies are configured with `HttpOnly` and `SameSite=Lax`
 - Database setup scripts separate initialization, demo seeding, and intentional resets
+- Local database backups can be created with a timestamped backup script
 - Encrypted TCP socket messages are used for pay raise deletion
 - HMAC-authenticated encrypted TCP socket messages are used for pay raise creation
 
 ## Security Features Still To Be Implemented
 
-- Move AES and HMAC keys fully out of source code
 - Improve AES key and IV/nonce handling
-- Add a backup/export process for local database files
+- Add restore support for local database backups
 - Add password change support for logged-in users
 - Add audit logging for administrative actions
 - Improve error handling and user feedback
@@ -72,6 +73,7 @@ The long-term goal is a very secure **local employee database** that runs on a s
 - Shared Jinja base template for consistent layout
 - CSS styling for navigation, forms, and tables
 - Safer database setup scripts for initialization, demo seeding, and intentional resets
+- Timestamped local database backup script
 - Demo data available for local testing
 
 ## Getting Started
@@ -94,6 +96,12 @@ Install dependencies:
 
 ```bash
 pip install -r requirements.txt
+```
+
+Create a local environment file:
+
+```bash
+copy .env.example .env
 ```
 
 Create the SQLite database tables without deleting existing data:
@@ -175,6 +183,9 @@ python init_db.py
 # Add demo data to an empty database
 python seed_demo.py
 
+# Create a timestamped backup of the local SQLite database
+python backup_db.py
+
 # Intentionally reset and rebuild the demo database
 python reset_demo_db.py
 
@@ -232,9 +243,12 @@ Browser  -->  Flask App  -->  encrypted + HMAC socket message
 ```text
 flask-employee-manager/
 ├── app.py
+├── config.py
+├── .env.example
 ├── init_db.py
 ├── seed_demo.py
 ├── reset_demo_db.py
+├── backup_db.py
 ├── setup.py
 ├── Encryption.py
 ├── ProcessPayRaiseDeletionsServer.py
@@ -265,6 +279,10 @@ flask-employee-manager/
 This project uses sample employee and pay raise records for demonstration purposes only. The demo seed script creates fake employee data for local testing.
 
 The seeded demo accounts all use the password `test123`, and the application stores those passwords as hashes.
+
+## Security Notice
+
+This project demonstrates practical database security concepts for a local Flask application. It should not be used with real employee data unless the remaining limitations are understood and addressed, especially around encryption key handling, backup restoration, audit logging, input validation, and deployment configuration.
 
 ## Author
 
