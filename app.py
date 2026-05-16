@@ -3,7 +3,7 @@ Flask Employee Manager
 
 Main Flask application for managing employee records and pay raise data.
 Handles login, role-based access control, encrypted database fields,
-and socket-based pay raise operations.
+CSRF protection, and socket-based pay raise operations.
 """
 
 # Standard library imports
@@ -42,7 +42,7 @@ app.config.update(
 csrf = CSRFProtect(app)
 
 # --------------------------
-# HMAC / socket constants
+# Socket / HMAC Constants
 # --------------------------
 HMAC_TAG_LEN = 64  # sha3_512 digests are 64 bytes
 HMAC_SEPARATOR = "^%$"  # separator between fields in the message
@@ -72,7 +72,7 @@ def dec(s: str) -> str:
 # Access Control
 # --------------------------
 def require_login():
-    """If user is not logged in, send them to the login page."""
+    """If the user is not logged in, send them to the login page."""
     if "UserID" not in session:
         return render_template("login.html")
     return None
@@ -83,26 +83,29 @@ def require_level(allowed):
     guard = require_login()
     if guard:
         return guard
+
     if session.get("SecurityLevel") not in allowed:
-        # If level is not allowed, pretend the page doesn't exist
+        # If the level is not allowed, pretend the page does not exist.
         return abort(404)
+
     return None
 
 
 # --------------------------
-# Routes
+# Home / Authentication
 # --------------------------
 @app.route("/")
 def home():
     guard = require_login()
     if guard:
         return guard
+
     return render_template("home.html", name=session.get("name"))
 
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    """Log in user by matching encrypted username and verifying the password hash."""
+    """Log in a user by matching encrypted username and verifying the password hash."""
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
@@ -123,24 +126,25 @@ def login():
                 and row["IsActive"] == 1
                 and check_password_hash(row["PasswordHash"], password)
         ):
-            # Store decrypted name and security level in the session
+            # Store the logged-in user's ID, display name, and security level.
             session.clear()
             session["UserID"] = row["UserID"]
             session["name"] = dec(row["Name"])
             session["SecurityLevel"] = int(row["SecurityLevel"])
+
             flash("Login successful.")
             return redirect(url_for("home"))
-        else:
-            session.clear()
-            flash("Invalid username and/or password!")
-            return render_template("login.html")
+
+        session.clear()
+        flash("Invalid username and/or password!")
+        return render_template("login.html")
 
     return render_template("login.html")
 
 
 @app.route("/logout")
 def logout():
-    """Log out user by clearing the session."""
+    """Log out the current user by clearing the session."""
     session.clear()
     return redirect(url_for("login"))
 
@@ -153,36 +157,41 @@ def addemployee():
     guard = require_level({1})
     if guard:
         return guard
+
     return render_template("addemployee.html")
 
 
 @app.route("/addrec", methods=["POST"])
 def addrec():
-    """Insert a new employee with encrypted fields."""
+    """Insert a new employee with encrypted fields and a hashed password."""
     guard = require_level({1})
     if guard:
         return guard
 
-    nm = request.form.get("Name", "").strip()
-    ag = request.form.get("Age", "").strip()
-    ph = request.form.get("PhNum", "").strip()
-    lvl = request.form.get("SecurityLevel", "").strip()
-    pwd = request.form.get("Password", "").strip()
+    name = request.form.get("Name", "").strip()
+    age = request.form.get("Age", "").strip()
+    phone = request.form.get("PhNum", "").strip()
+    security_level = request.form.get("SecurityLevel", "").strip()
+    password = request.form.get("Password", "").strip()
 
     errors = []
-    if not nm:
+
+    if not name:
         errors.append("Name cannot be empty.")
-    if not ag.isdigit() or not (1 <= int(ag) <= 120):
+
+    if not age.isdigit() or not (1 <= int(age) <= 120):
         errors.append("Age must be 1-120.")
-    if not ph:
+
+    if not phone:
         errors.append("Phone number cannot be empty.")
-    if not lvl.isdigit() or not (1 <= int(lvl) <= 3):
-        errors.append("SecurityLevel must be 1-3.")
-    if not pwd:
+
+    if not security_level.isdigit() or not (1 <= int(security_level) <= 3):
+        errors.append("Security level must be 1-3.")
+
+    if not password:
         errors.append("Password cannot be empty.")
 
     if errors:
-        # Show all validation messages on a simple result page
         return render_template("result.html", msg=", ".join(errors))
 
     with get_db() as con:
@@ -192,7 +201,13 @@ def addrec():
             INSERT INTO Employee (Name, Age, PhNum, SecurityLevel, PasswordHash)
             VALUES (?, ?, ?, ?, ?)
             """,
-            (enc(nm), int(ag), enc(ph), int(lvl), generate_password_hash(pwd)),
+            (
+                enc(name),
+                int(age),
+                enc(phone),
+                int(security_level),
+                generate_password_hash(password),
+            ),
         )
         con.commit()
 
@@ -218,6 +233,7 @@ def listemployees():
         rows = cur.fetchall()
 
     decrypted = []
+
     for r in rows:
         employee = {
             "UserID": r["UserID"],
@@ -276,24 +292,24 @@ def editemployee(user_id):
             return render_template("result.html", msg="Employee not found.")
 
         if request.method == "POST":
-            nm = request.form.get("Name", "").strip()
-            ag = request.form.get("Age", "").strip()
-            ph = request.form.get("PhNum", "").strip()
-            lvl = request.form.get("SecurityLevel", "").strip()
+            name = request.form.get("Name", "").strip()
+            age = request.form.get("Age", "").strip()
+            phone = request.form.get("PhNum", "").strip()
+            security_level = request.form.get("SecurityLevel", "").strip()
 
             errors = []
 
-            if not nm:
+            if not name:
                 errors.append("Name cannot be empty.")
 
-            if not ag.isdigit() or not (1 <= int(ag) <= 120):
+            if not age.isdigit() or not (1 <= int(age) <= 120):
                 errors.append("Age must be 1-120.")
 
-            if not ph:
+            if not phone:
                 errors.append("Phone number cannot be empty.")
 
-            if not lvl.isdigit() or not (1 <= int(lvl) <= 3):
-                errors.append("Security Level must be 1-3.")
+            if not security_level.isdigit() or not (1 <= int(security_level) <= 3):
+                errors.append("Security level must be 1-3.")
 
             if errors:
                 return render_template("result.html", msg=", ".join(errors))
@@ -307,7 +323,13 @@ def editemployee(user_id):
                     SecurityLevel=?
                 WHERE UserID = ?
                 """,
-                (enc(nm), int(ag), enc(ph), int(lvl), user_id),
+                (
+                    enc(name),
+                    int(age),
+                    enc(phone),
+                    int(security_level),
+                    user_id,
+                ),
             )
             con.commit()
 
@@ -449,6 +471,7 @@ def listpayraises():
         rows = cur.fetchall()
 
     decrypted = []
+
     for r in rows:
         raise_amount = float(dec(r["RaiseAmt"]))
 
@@ -465,10 +488,14 @@ def listpayraises():
             include_record = include_record and str(pay_raise["EmpID"]) == emp_id_filter
 
         if start_date_filter:
-            include_record = include_record and pay_raise["PayRaiseDate"] >= start_date_filter
+            include_record = (
+                    include_record and pay_raise["PayRaiseDate"] >= start_date_filter
+            )
 
         if end_date_filter:
-            include_record = include_record and pay_raise["PayRaiseDate"] <= end_date_filter
+            include_record = (
+                    include_record and pay_raise["PayRaiseDate"] <= end_date_filter
+            )
 
         if min_amount_filter:
             try:
@@ -506,17 +533,25 @@ def mypayraises():
         con.row_factory = sql.Row
         cur = con.cursor()
         cur.execute(
-            "SELECT PayRaiseDate, RaiseAmt FROM EmpPayRaise WHERE EmpID=? ORDER BY PayRaiseDate DESC",
+            """
+            SELECT PayRaiseDate, RaiseAmt
+            FROM EmpPayRaise
+            WHERE EmpID = ?
+            ORDER BY PayRaiseDate DESC
+            """,
             (uid,),
         )
         rows = cur.fetchall()
 
     decrypted = []
+
     for r in rows:
-        decrypted.append({
-            "PayRaiseDate": r["PayRaiseDate"],
-            "RaiseAmt": float(dec(r["RaiseAmt"])),
-        })
+        decrypted.append(
+            {
+                "PayRaiseDate": r["PayRaiseDate"],
+                "RaiseAmt": float(dec(r["RaiseAmt"])),
+            }
+        )
 
     return render_template("mypayraises.html", rows=decrypted)
 
@@ -532,21 +567,22 @@ def addpayraise():
         return guard
 
     if request.method == "POST":
-        dt = request.form.get("PayRaiseDate", "").strip()
-        amt = request.form.get("RaiseAmt", "").strip()
+        date = request.form.get("PayRaiseDate", "").strip()
+        amount = request.form.get("RaiseAmt", "").strip()
 
         errors = []
-        if not dt:
+
+        if not date:
             errors.append("Date is required.")
         else:
             try:
-                datetime.strptime(dt, "%Y-%m-%d")
+                datetime.strptime(date, "%Y-%m-%d")
             except ValueError:
                 errors.append("Invalid date format.")
 
         try:
-            val = float(amt)
-            if val <= 0:
+            amount_value = float(amount)
+            if amount_value <= 0:
                 errors.append("Raise must be positive.")
         except ValueError:
             errors.append("Raise must be a number.")
@@ -561,7 +597,7 @@ def addpayraise():
                 INSERT INTO EmpPayRaise (EmpID, PayRaiseDate, RaiseAmt)
                 VALUES (?, ?, ?)
                 """,
-                (session["UserID"], dt, enc(str(val))),
+                (session["UserID"], date, enc(str(amount_value))),
             )
             con.commit()
 
@@ -576,9 +612,10 @@ def addpayraise():
 @app.route("/submitdeletepayraise", methods=["GET", "POST"])
 def submitdeletepayraise():
     """
-    Page to submit a request to delete a pay raise.
-    - Validates EmpID and PayRaiseDate exist in EmpPayRaise.
-    - If valid, sends encrypted message via socket to localhost:9999.
+    Submit a request to delete a pay raise.
+
+    Validates that the EmpID and PayRaiseDate exist in the EmpPayRaise table.
+    If valid, sends an encrypted message to the local pay raise deletion server.
     """
     guard = require_level({1, 2})
     if guard:
@@ -586,68 +623,62 @@ def submitdeletepayraise():
 
     if request.method == "POST":
         emp_id = request.form.get("EmpID", "").strip()
-        dt = request.form.get("PayRaiseDate", "").strip()
+        date = request.form.get("PayRaiseDate", "").strip()
 
-        # Basic validation
         errors = []
+
         if not emp_id:
             errors.append("EmpID is required.")
         elif not emp_id.isdigit():
             errors.append("EmpID must be a number.")
 
-        if not dt:
+        if not date:
             errors.append("PayRaiseDate is required.")
         else:
             try:
-                datetime.strptime(dt, "%Y-%m-%d")
+                datetime.strptime(date, "%Y-%m-%d")
             except ValueError:
                 errors.append("PayRaiseDate must be YYYY-MM-DD.")
 
         if errors:
             return render_template("result.html", msg=", ".join(errors))
 
-        # Check that a matching record exists
         with get_db() as con:
             con.row_factory = sql.Row
             cur = con.cursor()
             cur.execute(
                 "SELECT * FROM EmpPayRaise WHERE EmpID=? AND PayRaiseDate=?",
-                (int(emp_id), dt),
+                (int(emp_id), date),
             )
             row = cur.fetchone()
 
         if not row:
-            # Data validation issue: no matching row
             return render_template(
                 "result.html",
-                msg="No pay raise found for that EmpID and PayRaiseDate."
+                msg="No pay raise found for that EmpID and PayRaiseDate.",
             )
 
-        # Build message "EmpID^%$PayRaiseDate"
-        separator = "^%$"
-        plain_msg = f"{emp_id}{separator}{dt}"
-
-        # Encrypt the message using the same cipher helper
+        plain_msg = f"{emp_id}{HMAC_SEPARATOR}{date}"
         encrypted_text = enc(plain_msg)
 
-        # Try to open a socket and send the encrypted message
-        HOST, PORT = "localhost", 9999
+        host, port = "localhost", 9999
+
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect((HOST, PORT))
+            sock.connect((host, port))
             sock.sendall(encrypted_text.encode("utf-8"))
             sock.close()
+
             return render_template(
                 "result.html",
-                msg="Test result successfully sent"
+                msg="Test result successfully sent",
             )
         except OSError:
             return render_template(
                 "result.html",
-                msg="Error - Test result NOT sent"
+                msg="Error - Test result NOT sent",
             )
 
-    # GET -> show form
     return render_template("submitdeletepayraise.html")
 
 
@@ -657,16 +688,13 @@ def submitdeletepayraise():
 @app.route("/sendaddpayraisehmac", methods=["GET", "POST"])
 def sendaddpayraisehmac():
     """
-    Page to send an authenticated (HMAC + Encryption) message to add a pay raise.
-    - Validates EmpID > 0 and exists in Employee table.
-    - Validates PayRaiseDate is a valid date.
-    - Validates RaiseAmt is numeric and > 0.
-    - If valid, builds a message with a separator, encrypts it with AES,
-      computes an HMAC (sha3_512) over the plaintext message, concatenates
-      ciphertext + tag, and sends to localhost:8888 via socket.
-    - Shows a result page with success / failure message.
+    Send an authenticated encrypted message to add a pay raise.
+
+    Validates EmpID, PayRaiseDate, and RaiseAmt. If valid, builds a separated
+    plaintext message, encrypts it, signs the plaintext with HMAC-SHA3-512,
+    and sends ciphertext + tag to the local add-pay-raise socket server.
     """
-    guard = require_login()  # available to all logged-in users
+    guard = require_login()
     if guard:
         return guard
 
@@ -677,29 +705,25 @@ def sendaddpayraisehmac():
 
         errors = []
 
-        # Validate EmpID is numeric and > 0
         if not emp_id:
             errors.append("EmpID is required.")
+        elif not emp_id.isdigit():
+            errors.append("EmpID must be a numeric value.")
+        elif int(emp_id) <= 0:
+            errors.append("EmpID must be greater than 0.")
         else:
-            if not emp_id.isdigit():
-                errors.append("EmpID must be a numeric value.")
-            else:
-                if int(emp_id) <= 0:
-                    errors.append("EmpID must be greater than 0.")
-                else:
-                    # Check EmpID exists in Employee table
-                    with get_db() as con:
-                        con.row_factory = sql.Row
-                        cur = con.cursor()
-                        cur.execute(
-                            "SELECT UserID FROM Employee WHERE UserID=?",
-                            (int(emp_id),),
-                        )
-                        row = cur.fetchone()
-                    if not row:
-                        errors.append("EmpID does not exist in the Employee table.")
+            with get_db() as con:
+                con.row_factory = sql.Row
+                cur = con.cursor()
+                cur.execute(
+                    "SELECT UserID FROM Employee WHERE UserID=?",
+                    (int(emp_id),),
+                )
+                row = cur.fetchone()
 
-        # Validate PayRaiseDate
+            if not row:
+                errors.append("EmpID does not exist in the Employee table.")
+
         if not payraise_date:
             errors.append("PayRaiseDate is required.")
         else:
@@ -708,55 +732,48 @@ def sendaddpayraisehmac():
             except ValueError:
                 errors.append("PayRaiseDate must be a valid date in YYYY-MM-DD format.")
 
-        # Validate RaiseAmt
         if not raise_amt:
             errors.append("RaiseAmt is required.")
         else:
             try:
-                amt_val = float(raise_amt)
-                if amt_val <= 0:
+                amount_value = float(raise_amt)
+                if amount_value <= 0:
                     errors.append("RaiseAmt must be greater than 0.")
             except ValueError:
                 errors.append("RaiseAmt must be a numeric value.")
 
-        # If any validation failed, show the issues
         if errors:
             return render_template("result.html", msg=", ".join(errors))
 
-        # All fields valid -> build the plaintext message with a separator
         body_text = f"{emp_id}{HMAC_SEPARATOR}{payraise_date}{HMAC_SEPARATOR}{raise_amt}"
         body_bytes = body_text.encode("utf-8")
 
-        # Encrypt the message (AES CFB using Encryption.py)
-        body_encrypted = Encryption.cipher.encrypt(body_bytes)  # returns base64 bytes
+        body_encrypted = Encryption.cipher.encrypt(body_bytes)
 
-        # Compute HMAC tag over plaintext (like ExampleEncryptionHMAC.py)
         tag = hmac.new(
             HMAC_SECRET,
             body_bytes,
-            digestmod=hashlib.sha3_512
+            digestmod=hashlib.sha3_512,
         ).digest()
 
-        # Final message is ciphertext + tag
         sent_message = body_encrypted + tag
 
-        # Try to open connection and send
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect((HMAC_HOST, HMAC_PORT))
             sock.sendall(sent_message)
             sock.close()
+
             return render_template(
                 "result.html",
-                msg="Message to create a pay raise successfully sent"
+                msg="Message to create a pay raise successfully sent",
             )
         except OSError:
             return render_template(
                 "result.html",
-                msg="Error - Message to create a pay raise NOT sent"
+                msg="Error - Message to create a pay raise NOT sent",
             )
 
-    # GET -> show the form
     return render_template("sendaddpayraisehmac.html")
 
 
