@@ -9,7 +9,6 @@ and socket-based pay raise operations.
 # Standard library imports
 import hashlib
 import hmac
-import os
 import socket
 import sqlite3 as sql
 from datetime import datetime
@@ -30,9 +29,10 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 # Local imports
 import Encryption
+from config import FLASK_DEBUG, FLASK_SECRET_KEY, HMAC_SECRET
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key-local-only")
+app.secret_key = FLASK_SECRET_KEY
 
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
@@ -44,7 +44,6 @@ csrf = CSRFProtect(app)
 # --------------------------
 # HMAC / socket constants
 # --------------------------
-HMAC_SECRET = b"1234"  # shared secret between client and server
 HMAC_TAG_LEN = 64  # sha3_512 digests are 64 bytes
 HMAC_SEPARATOR = "^%$"  # separator between fields in the message
 HMAC_HOST = "localhost"
@@ -765,5 +764,4 @@ def sendaddpayraisehmac():
 # Run
 # --------------------------
 if __name__ == "__main__":
-    debug_mode = os.environ.get("FLASK_DEBUG", "0") == "1"
-    app.run(debug=debug_mode)
+    app.run(debug=FLASK_DEBUG)

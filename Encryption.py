@@ -5,8 +5,11 @@ Provides AES encryption and decryption helper functions used by the
 Flask application and TCP socket servers.
 """
 
+import base64
+
 from Crypto.Cipher import AES
-import string, base64
+
+from config import AES_KEY, AES_IV
 
 
 class AESCipher(object):
@@ -24,19 +27,7 @@ class AESCipher(object):
         decoded = base64.b64decode(raw)
         self.cipher = AES.new(self.key, AES.MODE_CFB, self.iv)
         decrypted = self.cipher.decrypt(decoded)
-        return str(decrypted, 'utf-8')
+        return str(decrypted, "utf-8")
 
 
-key = b'BLhgpCL81fdLBk23HkZp8BgbT913cqt0'
-iv = b'OWFJATh1Zowac2xr'
-
-cipher = AESCipher(key, iv)
-
-"""
-plaintext = b'this is a super important message'
-encrypted = cipher.encrypt(plaintext)
-print('Encrypted:', encrypted)
-
-decrypted = cipher.decrypt(encrypted)
-print('Decrypted:', decrypted)
-"""
+cipher = AESCipher(AES_KEY, AES_IV)
