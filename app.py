@@ -76,6 +76,27 @@ def dec(s: str) -> str:
     return Encryption.cipher.decrypt(s)
 
 
+def log_audit(action: str, details: str = ""):
+    """Write a sensitive action to the local audit log."""
+    user_id = session.get("UserID")
+
+    with get_db() as con:
+        cur = con.cursor()
+        cur.execute(
+            """
+            INSERT INTO AuditLog (UserID, Action, Details, CreatedAt)
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                user_id,
+                action,
+                details,
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            ),
+        )
+        con.commit()
+
+
 # --------------------------
 # Access Control
 # --------------------------
@@ -507,6 +528,8 @@ def changepassword():
             con.commit()
 
         session["PasswordHash"] = new_password_hash
+        log_audit("CHANGE_PASSWORD", "User changed their own password.")
+
         flash("Password changed successfully.")
         return redirect(url_for("home"))
 
@@ -566,6 +589,8 @@ def resetpassword(user_id):
             )
             con.commit()
 
+            log_audit("RESET_PASSWORD", f"Reset password for UserID {user_id}.")
+
             return render_template("result.html", msg="Password reset successfully.")
 
     return render_template("resetpassword.html", employee=employee)
@@ -592,6 +617,8 @@ def deactivateemployee(user_id):
         )
         con.commit()
 
+    log_audit("DEACTIVATE_EMPLOYEE", f"Deactivated UserID {user_id}.")
+
     return redirect(url_for("listemployees"))
 
 
@@ -612,6 +639,8 @@ def reactivateemployee(user_id):
             (user_id,),
         )
         con.commit()
+
+    log_audit("REACTIVATE_EMPLOYEE", f"Reactivated UserID {user_id}.")
 
     return redirect(url_for("listemployees"))
 

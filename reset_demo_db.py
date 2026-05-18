@@ -30,9 +30,11 @@ def reset_demo_database():
     cur = conn.cursor()
 
     try:
+        cur.execute("DROP TABLE IF EXISTS AuditLog")
         cur.execute("DROP TABLE IF EXISTS EmpPayRaise")
         cur.execute("DROP TABLE IF EXISTS Employee")
         conn.commit()
+        print("AuditLog table dropped.")
         print("EmpPayRaise table dropped.")
         print("Employee table dropped.")
     except Exception:
@@ -67,6 +69,20 @@ def reset_demo_database():
         """
     )
     print("EmpPayRaise table created.")
+
+    cur.execute(
+        """
+        CREATE TABLE AuditLog
+        (
+            AuditLogID INTEGER PRIMARY KEY AUTOINCREMENT,
+            UserID     INTEGER,
+            Action     TEXT NOT NULL,
+            Details    TEXT,
+            CreatedAt  TEXT NOT NULL
+        )
+        """
+    )
+    print("AuditLog table created.")
 
     employees = [
         ("PDiana", 34, "8135550001", 1, "test123"),
