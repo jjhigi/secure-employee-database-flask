@@ -83,6 +83,34 @@ def require_login():
     """If the user is not logged in, send them to the login page."""
     if "UserID" not in session:
         return render_template("login.html")
+
+    with get_db() as con:
+        con.row_factory = sql.Row
+        cur = con.cursor()
+        cur.execute(
+            """
+            SELECT UserID, Name, SecurityLevel, PasswordHash, IsActive
+            FROM Employee
+            WHERE UserID=?
+            """,
+            (session["UserID"],),
+        )
+        row = cur.fetchone()
+
+    if not row or row["IsActive"] != 1:
+        session.clear()
+        flash("Your session is no longer valid. Please log in again.")
+        return redirect(url_for("login"))
+
+    if session.get("PasswordHash") != row["PasswordHash"]:
+        session.clear()
+        flash("Your session is no longer valid. Please log in again.")
+        return redirect(url_for("login"))
+
+    # Refresh session values from the database in case the account changed.
+    session["name"] = dec(row["Name"])
+    session["SecurityLevel"] = int(row["SecurityLevel"])
+
     return None
 
 
@@ -200,6 +228,7 @@ def login():
             session["UserID"] = row["UserID"]
             session["name"] = dec(row["Name"])
             session["SecurityLevel"] = int(row["SecurityLevel"])
+            session["PasswordHash"] = row["PasswordHash"]
 
             flash("Login successful.")
             return redirect(url_for("home"))
@@ -413,6 +442,75 @@ def editemployee(user_id):
     }
 
     return render_template("editemployee.html", employee=employee)
+
+
+# --------------------------
+# Change Own Password
+# --------------------------
+@app.route("/changepassword", methods=["GET", "POST"])
+def changepassword():
+    """Allow the logged-in user to change their own password."""
+    guard = require_login()
+    if guard:
+        return guard
+
+    user_id = session["UserID"]
+
+    if request.method == "POST":
+        current_password = request.form.get("CurrentPassword", "").strip()
+        new_password = request.form.get("NewPassword", "").strip()
+        confirm_password = request.form.get("ConfirmPassword", "").strip()
+
+        errors = []
+
+        if not current_password:
+            errors.append("Current password cannot be empty.")
+
+        if not new_password:
+            errors.append("New password cannot be empty.")
+
+        if new_password != confirm_password:
+            errors.append("New passwords do not match.")
+
+        with get_db() as con:
+            con.row_factory = sql.Row
+            cur = con.cursor()
+            cur.execute(
+                "SELECT PasswordHash FROM Employee WHERE UserID=?",
+                (user_id,),
+            )
+            row = cur.fetchone()
+
+        if not row:
+            errors.append("User account was not found.")
+        elif current_password and not check_password_hash(
+                row["PasswordHash"],
+                current_password,
+        ):
+            errors.append("Current password is incorrect.")
+
+        if errors:
+            return render_template("result.html", msg=", ".join(errors))
+
+        new_password_hash = generate_password_hash(new_password)
+
+        with get_db() as con:
+            cur = con.cursor()
+            cur.execute(
+                """
+                UPDATE Employee
+                SET PasswordHash=?
+                WHERE UserID=?
+                """,
+                (new_password_hash, user_id),
+            )
+            con.commit()
+
+        session["PasswordHash"] = new_password_hash
+        flash("Password changed successfully.")
+        return redirect(url_for("home"))
+
+    return render_template("changepassword.html")
 
 
 # --------------------------
