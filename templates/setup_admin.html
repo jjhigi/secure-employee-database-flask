@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Initial Admin Setup{% endblock %}
+
+{% block content %}
+<h1>Initial Admin Setup</h1>
+
+<p>Create the first administrator account for this local database.</p>
+
+<form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <p>
+        <label>Name:</label>
+        <input type="text" name="Name" required>
+    </p>
+
+    <p>
+        <label>Age:</label>
+        <input type="number" name="Age" min="1" max="120" required>
+    </p>
+
+    <p>
+        <label>Phone Number:</label>
+        <input type="text" name="PhNum" required>
+    </p>
+
+    <p>
+        <label>Password:</label>
+        <input type="password" name="Password" required>
+    </p>
+
+    <p>
+        <label>Confirm Password:</label>
+        <input type="password" name="ConfirmPassword" required>
+    </p>
+
+    <p>
+        <button type="submit">Create First Admin</button>
+    </p>
+</form>
+{% endblock %}
