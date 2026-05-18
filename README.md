@@ -36,11 +36,11 @@ The end goal is a very secure **local employee database** that runs on a single 
 - Local database backups can be created with a timestamped backup script
 - Encrypted TCP socket messages are used for pay raise deletion
 - HMAC-authenticated encrypted TCP socket messages are used for pay raise creation
+- Local database backups can be restored with a safety backup created first
 
 ## Security Features Still To Be Implemented
 
 - Improve AES key and IV/nonce handling
-- Add restore support for local database backups
 - Add password change support for logged-in users
 - Add audit logging for administrative actions
 - Improve error handling and user feedback
@@ -186,6 +186,9 @@ python seed_demo.py
 # Create a timestamped backup of the local SQLite database
 python backup_db.py
 
+# Restore the local SQLite database from a backup in backups/
+python restore_db.py EmployeeDB_YYYY-MM-DD_HH-MM-SS.db
+
 # Intentionally reset and rebuild the demo database
 python reset_demo_db.py
 
@@ -249,6 +252,7 @@ flask-employee-manager/
 ├── seed_demo.py
 ├── reset_demo_db.py
 ├── backup_db.py
+├── restore_db.py
 ├── setup.py
 ├── Encryption.py
 ├── ProcessPayRaiseDeletionsServer.py
