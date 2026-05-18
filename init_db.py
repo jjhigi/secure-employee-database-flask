@@ -12,7 +12,7 @@ DB_NAME = "EmployeeDB.db"
 
 
 def create_tables():
-    """Create Employee and EmpPayRaise tables if they do not already exist."""
+    """Create Employee, EmpPayRaise, and AuditLog tables if they do not already exist."""
     conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
 
@@ -38,6 +38,18 @@ def create_tables():
             PayRaiseDate TEXT NOT NULL,
             RaiseAmt TEXT NOT NULL,
             FOREIGN KEY (EmpID) REFERENCES Employee(UserID)
+        )
+        """
+    )
+
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS AuditLog(
+            AuditLogID INTEGER PRIMARY KEY AUTOINCREMENT,
+            UserID INTEGER,
+            Action TEXT NOT NULL,
+            Details TEXT,
+            CreatedAt TEXT NOT NULL
         )
         """
     )
