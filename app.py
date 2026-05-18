@@ -58,6 +58,14 @@ def get_db():
     return sql.connect("EmployeeDB.db")
 
 
+def employee_count():
+    """Return the number of employee records in the database."""
+    with get_db() as con:
+        cur = con.cursor()
+        cur.execute("SELECT COUNT(*) FROM Employee")
+        return cur.fetchone()[0]
+
+
 def enc(s: str) -> str:
     """Encrypt a Python string and return text."""
     return Encryption.cipher.encrypt(s.encode("utf-8")).decode("utf-8")
@@ -94,6 +102,67 @@ def require_level(allowed):
 # --------------------------
 # Home / Authentication
 # --------------------------
+@app.route("/setup-admin", methods=["GET", "POST"])
+def setup_admin():
+    """Create the first admin account if the Employee table is empty."""
+    if employee_count() > 0:
+        return render_template(
+            "result.html",
+            msg="Initial admin setup is already complete.",
+        )
+
+    if request.method == "POST":
+        name = request.form.get("Name", "").strip()
+        age = request.form.get("Age", "").strip()
+        phone = request.form.get("PhNum", "").strip()
+        password = request.form.get("Password", "").strip()
+        confirm_password = request.form.get("ConfirmPassword", "").strip()
+
+        errors = []
+
+        if not name:
+            errors.append("Name cannot be empty.")
+
+        if not age.isdigit() or not (1 <= int(age) <= 120):
+            errors.append("Age must be 1-120.")
+
+        if not phone:
+            errors.append("Phone number cannot be empty.")
+
+        if not password:
+            errors.append("Password cannot be empty.")
+
+        if password != confirm_password:
+            errors.append("Passwords do not match.")
+
+        if errors:
+            return render_template("result.html", msg=", ".join(errors))
+
+        with get_db() as con:
+            cur = con.cursor()
+            cur.execute(
+                """
+                INSERT INTO Employee
+                    (Name, Age, PhNum, SecurityLevel, PasswordHash, IsActive)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    enc(name),
+                    int(age),
+                    enc(phone),
+                    1,
+                    generate_password_hash(password),
+                    1,
+                ),
+            )
+            con.commit()
+
+        flash("Initial admin account created. Please log in.")
+        return redirect(url_for("login"))
+
+    return render_template("setup_admin.html")
+
+
 @app.route("/")
 def home():
     guard = require_login()
