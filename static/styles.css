@@ -65,7 +65,8 @@ input[type="text"],
 input[type="password"],
 input[type="tel"],
 input[type="date"],
-input[type="number"] {
+input[type="number"],
+select {
     width: 100%;
     padding: 8px;
     margin-top: 4px;
