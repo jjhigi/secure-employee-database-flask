@@ -65,7 +65,10 @@ The goal is a secure, usable local employee database that runs on one admin comp
 - Pay raise list filters use validated query inputs.
 - Pay raise amount validation rejects blank, non-numeric, zero, negative, and oversized values.
 - Pay raise date validation rejects blank, invalid, too-old, and future dates.
-- Encrypted TCP socket messages are used for pay raise deletion requests.
+- Encrypted TCP socket messages are used for pay raise void requests.
+- Pay raise records are voided instead of permanently deleted.
+- Voided pay raise records remain available in the full pay raise list for history/auditability.
+- Voided pay raise records are hidden from the current user's personal pay raise page.
 - HMAC-authenticated encrypted TCP socket messages are used for pay raise creation requests.
 - HMAC validation helps detect tampered add-pay-raise socket messages.
 - Database access is centralized through `get_db()`.
@@ -93,7 +96,8 @@ The goal is a secure, usable local employee database that runs on one admin comp
 - Filter pay raise records by employee ID, date range, and minimum amount
 - View pay raises for the currently logged-in user
 - Store pay raise amounts with AES encryption
-- Submit encrypted socket-based pay raise deletion requests
+- Submit encrypted socket-based pay raise void requests
+- Keep voided pay raise records for history instead of permanently deleting them
 - Submit encrypted and HMAC-authenticated socket-based pay raise creation requests
 
 ### Database Utilities
@@ -105,6 +109,7 @@ The goal is a secure, usable local employee database that runs on one admin comp
 - Restore a database backup from the `backups/` folder
 - Create a safety backup before restoring over the current database
 - Record and filter selected sensitive actions in the `AuditLog` table
+- Preserve voided pay raise records instead of permanently deleting them
 - Start setup and app launch with Windows batch scripts
 
 ## Current Limitations
@@ -284,7 +289,7 @@ Start the main Flask app:
 python app.py
 ```
 
-Start the encrypted pay raise deletion server in a separate terminal:
+Start the encrypted pay raise void server in a separate terminal:
 
 ```bash
 python ProcessPayRaiseDeletionsServer.py
@@ -305,7 +310,7 @@ Browser  -->  Flask App  -->  SQLite Database
                   |
                   | encrypted socket message
                   v
-          TCP Server for Pay Raise Deletion
+          TCP Server for Pay Raise Voiding
 
 Browser  -->  Flask App  -->  encrypted + HMAC socket message
                   |
@@ -322,6 +327,7 @@ Browser  -->  Flask App  -->  encrypted + HMAC socket message
 - Role-based security levels control protected pages.
 - Audit logging records selected sensitive account actions.
 - Socket servers demonstrate encrypted local client/server communication.
+- Pay raise voiding marks records as voided instead of deleting them.
 - HMAC validation helps verify that add-pay-raise socket messages were not tampered with.
 
 ## Application Routes
@@ -344,7 +350,7 @@ Browser  -->  Flask App  -->  encrypted + HMAC socket message
 | GET | `/listpayraises` | Level 2 | List and filter all pay raise records |
 | GET | `/mypayraises` | Yes | Show current user's pay raises |
 | GET / POST | `/addpayraise` | Yes | Add pay raise directly through Flask |
-| GET / POST | `/submitdeletepayraise` | Level 1 or 2 | Send encrypted delete request to TCP server |
+| GET / POST | `/submitdeletepayraise` | Level 1 or 2 | Send encrypted void request to TCP server |
 | GET / POST | `/sendaddpayraisehmac` | Yes | Send encrypted and authenticated add-pay-raise message |
 
 ## Project Structure
