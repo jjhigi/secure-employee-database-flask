@@ -231,6 +231,9 @@ def setup_admin():
 
 @app.route("/")
 def home():
+    if employee_count() == 0:
+        return redirect(url_for("setup_admin"))
+
     guard = require_login()
     if guard:
         return guard
