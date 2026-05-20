@@ -14,8 +14,16 @@
     <label>Phone Number:</label><br>
     <input type="tel" name="PhNum" value="{{ employee['PhNum'] }}"><br><br>
 
-    <label>Security Level:</label><br>
-    <input type="text" name="SecurityLevel" value="{{ employee['SecurityLevel'] }}"><br><br>
+    <label for="SecurityLevel">Security Level:</label><br>
+    <select id="SecurityLevel" name="SecurityLevel">
+        {% for option in security_level_options %}
+            {% if employee["SecurityLevel"] == option["value"] %}
+            <option value="{{ option['value'] }}" selected>{{ option["label"] }}</option>
+            {% else %}
+            <option value="{{ option['value'] }}">{{ option["label"] }}</option>
+            {% endif %}
+        {% endfor %}
+    </select><br><br>
 
     <input type="submit" value="Save Changes">
 </form>
