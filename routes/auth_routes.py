@@ -19,8 +19,8 @@ from flask import (
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from audit import log_audit
+from crypto_helpers import dec, enc
 from db import get_db
-import Encryption
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -36,16 +36,6 @@ MAX_PASSWORD_LENGTH = 128
 # --------------------------
 # Helpers
 # --------------------------
-def enc(s: str) -> str:
-    """Encrypt a Python string and return text."""
-    return Encryption.cipher.encrypt(s.encode("utf-8")).decode("utf-8")
-
-
-def dec(s: str) -> str:
-    """Decrypt text from the database back into a normal string."""
-    return Encryption.cipher.decrypt(s)
-
-
 def employee_count():
     """Return the number of employee records in the database."""
     with get_db() as con:

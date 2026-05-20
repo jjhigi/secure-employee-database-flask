@@ -20,7 +20,7 @@ from werkzeug.security import generate_password_hash
 from audit import log_audit
 from auth_helpers import require_level
 from db import get_db
-from routes.auth_routes import dec, enc
+from crypto_helpers import dec, enc
 
 employee_bp = Blueprint("employee", __name__)
 
