@@ -20,7 +20,8 @@ from flask import (
 from auth_helpers import require_level
 from config import HMAC_SECRET
 from db import get_db
-from routes.auth_routes import dec, enc, require_login
+from crypto_helpers import dec, enc
+from routes.auth_routes import require_login
 import Encryption
 
 payraise_bp = Blueprint("payraise", __name__)
