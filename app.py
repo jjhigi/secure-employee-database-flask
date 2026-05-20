@@ -49,7 +49,6 @@ HMAC_SEPARATOR = "^%$"  # separator between fields in the message
 HMAC_HOST = "localhost"
 HMAC_PORT = 8888
 
-
 # --------------------------
 # Validation Constants
 # --------------------------
@@ -122,7 +121,7 @@ def require_login():
             """
             SELECT UserID, Name, SecurityLevel, PasswordHash, IsActive
             FROM Employee
-            WHERE UserID=?
+            WHERE UserID = ?
             """,
             (session["UserID"],),
         )
@@ -562,7 +561,7 @@ def changepassword():
                 """
                 UPDATE Employee
                 SET PasswordHash=?
-                WHERE UserID=?
+                WHERE UserID = ?
                 """,
                 (new_password_hash, user_id),
             )
@@ -688,6 +687,32 @@ def reactivateemployee(user_id):
     log_audit("REACTIVATE_EMPLOYEE", f"Reactivated UserID {user_id}.")
 
     return redirect(url_for("listemployees"))
+
+
+# --------------------------
+# Audit Log Viewer (Admin only)
+# --------------------------
+@app.route("/auditlog")
+def auditlog():
+    """Show recent audit log entries. Admin only."""
+    guard = require_level({1})
+    if guard:
+        return guard
+
+    with get_db() as con:
+        con.row_factory = sql.Row
+        cur = con.cursor()
+        cur.execute(
+            """
+            SELECT AuditLogID, UserID, Action, Details, CreatedAt
+            FROM AuditLog
+            ORDER BY CreatedAt DESC, AuditLogID DESC
+            LIMIT 100
+            """
+        )
+        rows = cur.fetchall()
+
+    return render_template("auditlog.html", rows=rows)
 
 
 # --------------------------

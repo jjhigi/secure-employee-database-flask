@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Log{% endblock %}
+
+{% block content %}
+<h1>Audit Log</h1>
+
+<p>Recent sensitive account actions are shown below.</p>
+
+{% if rows %}
+<table>
+    <tr>
+        <th>ID</th>
+        <th>User ID</th>
+        <th>Action</th>
+        <th>Details</th>
+        <th>Created At</th>
+    </tr>
+
+    {% for row in rows %}
+    <tr>
+        <td>{{ row["AuditLogID"] }}</td>
+        <td>{{ row["UserID"] }}</td>
+        <td>{{ row["Action"] }}</td>
+        <td>{{ row["Details"] }}</td>
+        <td>{{ row["CreatedAt"] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>No audit log entries found.</p>
+{% endif %}
+{% endblock %}
