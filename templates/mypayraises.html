@@ -3,6 +3,7 @@
 {% block content %}
 <h2>My Pay Raises</h2>
 
+{% if rows %}
 <table border="1">
     <tr>
         <td>Pay Raise Date</td>
@@ -16,4 +17,7 @@
     </tr>
     {% endfor %}
 </table>
+{% else %}
+<p>No active pay raise records found.</p>
+{% endif %}
 {% endblock %}

@@ -1,9 +1,9 @@
 """
 Encrypted Pay Raise Deletion Server
 
-TCP server that receives encrypted pay raise deletion requests,
-decrypts the message, validates the request, and deletes matching
-records from the SQLite database.
+TCP server that receives encrypted pay raise void requests,
+decrypts the message, validates the request, and marks matching
+records as voided in the SQLite database.
 """
 
 import socketserver
@@ -27,7 +27,7 @@ class PayRaiseDeleteHandler(socketserver.BaseRequestHandler):
       1. Receives an encrypted message from the client.
       2. Decrypts to get "EmpID^%$PayRaiseDate".
       3. Validates fields and the existence of the record.
-      4. Deletes the matching EmpPayRaise record if valid.
+      4. Marks the matching EmpPayRaise record as voided if valid.
       5. Prints clear messages about what happened.
     """
 
@@ -93,14 +93,20 @@ class PayRaiseDeleteHandler(socketserver.BaseRequestHandler):
             cur = conn.cursor()
 
             cur.execute(
-                "SELECT PayRaiseID FROM EmpPayRaise WHERE EmpID=? AND PayRaiseDate=?",
+                """
+                SELECT PayRaiseID
+                FROM EmpPayRaise
+                WHERE EmpID = ?
+                  AND PayRaiseDate = ?
+                  AND IsVoided = 0
+                """,
                 (emp_id, payraise_date),
             )
             row = cur.fetchone()
 
             if not row:
                 print(
-                    "Validation error: No matching EmpPayRaise record found "
+                    "Validation error: No active matching EmpPayRaise record found "
                     f"for EmpID={emp_id} and PayRaiseDate={payraise_date}."
                 )
                 conn.close()
@@ -108,15 +114,15 @@ class PayRaiseDeleteHandler(socketserver.BaseRequestHandler):
 
             payraise_id = row[0]
 
-            # Delete the record
+            # Void the record instead of deleting it
             cur.execute(
-                "DELETE FROM EmpPayRaise WHERE PayRaiseID=?",
+                "UPDATE EmpPayRaise SET IsVoided=1 WHERE PayRaiseID=?",
                 (payraise_id,),
             )
             conn.commit()
             conn.close()
 
-            print("Record successfully deleted.")
+            print("Record successfully voided.")
 
         except sqlite3.Error as e:
             print(f"Database error: {e}")

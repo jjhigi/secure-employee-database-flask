@@ -64,6 +64,7 @@ def reset_demo_database():
             EmpID        INTEGER NOT NULL,
             PayRaiseDate TEXT    NOT NULL,
             RaiseAmt     TEXT    NOT NULL,
+            IsVoided     INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY (EmpID) REFERENCES Employee (UserID)
         )
         """

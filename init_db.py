@@ -37,6 +37,7 @@ def create_tables():
             EmpID INTEGER NOT NULL,
             PayRaiseDate TEXT NOT NULL,
             RaiseAmt TEXT NOT NULL,
+            IsVoided INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY (EmpID) REFERENCES Employee(UserID)
         )
         """
@@ -53,6 +54,18 @@ def create_tables():
         )
         """
     )
+
+    cur.execute("PRAGMA table_info(EmpPayRaise)")
+    columns = [row[1] for row in cur.fetchall()]
+
+    if "IsVoided" not in columns:
+        cur.execute(
+            """
+            ALTER TABLE EmpPayRaise
+            ADD COLUMN IsVoided INTEGER NOT NULL DEFAULT 0
+            """
+        )
+        print("Added IsVoided column to EmpPayRaise.")
 
     conn.commit()
     conn.close()

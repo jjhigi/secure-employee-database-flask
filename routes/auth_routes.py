@@ -30,6 +30,7 @@ from validation_constants import (
 
 auth_bp = Blueprint("auth", __name__)
 
+
 # --------------------------
 # Helpers
 # --------------------------
