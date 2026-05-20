@@ -24,7 +24,6 @@ import Encryption
 
 auth_bp = Blueprint("auth", __name__)
 
-
 # --------------------------
 # Validation Constants
 # --------------------------
@@ -67,7 +66,7 @@ def require_login():
             """
             SELECT UserID, Name, SecurityLevel, PasswordHash, IsActive
             FROM Employee
-            WHERE UserID=?
+            WHERE UserID = ?
             """,
             (session["UserID"],),
         )
@@ -297,7 +296,7 @@ def changepassword():
                 """
                 UPDATE Employee
                 SET PasswordHash=?
-                WHERE UserID=?
+                WHERE UserID = ?
                 """,
                 (new_password_hash, user_id),
             )
