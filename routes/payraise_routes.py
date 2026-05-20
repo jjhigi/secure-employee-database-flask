@@ -88,12 +88,12 @@ def validate_raise_amount(amount_text, field_name):
 
 
 # --------------------------
-# List Pay Raises (Level 2)
+# List Pay Raises (Level 1 or 2)
 # --------------------------
 @payraise_bp.route("/listpayraises")
 def listpayraises():
-    """List pay raises, with optional filtering by employee ID, date range, and minimum amount."""
-    guard = require_level({2})
+    """List all pay raises with optional filters."""
+    guard = require_level({1, 2})
     if guard:
         return guard
 
