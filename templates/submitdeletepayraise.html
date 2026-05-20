@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Submit Pay Raise Deletion Request</h2>
+<h2>Void Pay Raise</h2>
 
 <form method="post" action="/submitdeletepayraise">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -11,6 +11,6 @@
     <label>Pay Raise Date:</label><br>
     <input type="date" name="PayRaiseDate" required><br><br>
 
-    <input type="submit" value="Submit">
+    <input type="submit" value="Send Void Request">
 </form>
 {% endblock %}

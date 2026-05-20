@@ -104,7 +104,13 @@ def listpayraises():
     with get_db() as con:
         con.row_factory = sql.Row
         cur = con.cursor()
-        cur.execute("SELECT * FROM EmpPayRaise")
+        cur.execute(
+            """
+            SELECT *
+            FROM EmpPayRaise
+            ORDER BY PayRaiseDate DESC, PayRaiseID DESC
+            """
+        )
         rows = cur.fetchall()
 
     decrypted = []
@@ -117,6 +123,8 @@ def listpayraises():
             "EmpID": r["EmpID"],
             "PayRaiseDate": r["PayRaiseDate"],
             "RaiseAmt": raise_amount,
+            "IsVoided": r["IsVoided"],
+            "Status": "Voided" if r["IsVoided"] == 1 else "Active",
         }
 
         include_record = True
@@ -174,6 +182,7 @@ def mypayraises():
             SELECT PayRaiseDate, RaiseAmt
             FROM EmpPayRaise
             WHERE EmpID = ?
+              AND IsVoided = 0
             ORDER BY PayRaiseDate DESC
             """,
             (uid,),
@@ -239,7 +248,7 @@ def addpayraise():
 @payraise_bp.route("/submitdeletepayraise", methods=["GET", "POST"])
 def submitdeletepayraise():
     """
-    Submit a request to delete a pay raise.
+    Submit a request to void a pay raise.
 
     Validates that the EmpID and PayRaiseDate exist in the EmpPayRaise table.
     If valid, sends an encrypted message to the local pay raise deletion server.
@@ -268,7 +277,13 @@ def submitdeletepayraise():
             con.row_factory = sql.Row
             cur = con.cursor()
             cur.execute(
-                "SELECT * FROM EmpPayRaise WHERE EmpID=? AND PayRaiseDate=?",
+                """
+                SELECT *
+                FROM EmpPayRaise
+                WHERE EmpID = ?
+                  AND PayRaiseDate = ?
+                  AND IsVoided = 0
+                """,
                 (int(emp_id), date),
             )
             row = cur.fetchone()
@@ -276,7 +291,7 @@ def submitdeletepayraise():
         if not row:
             return render_template(
                 "result.html",
-                msg="No pay raise found for that EmpID and PayRaiseDate.",
+                msg="No active pay raise found for that EmpID and PayRaiseDate.",
             )
 
         plain_msg = f"{emp_id}{HMAC_SEPARATOR}{date}"
@@ -292,12 +307,12 @@ def submitdeletepayraise():
 
             return render_template(
                 "result.html",
-                msg="Test result successfully sent",
+                msg="Void pay raise request successfully sent.",
             )
         except OSError:
             return render_template(
                 "result.html",
-                msg="Error - Test result NOT sent",
+                msg="Error - void pay raise request NOT sent.",
             )
 
     return render_template("submitdeletepayraise.html")
