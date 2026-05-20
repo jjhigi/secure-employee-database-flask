@@ -2,64 +2,97 @@
 
 A local-first Flask web application for managing employee records and pay raise data.
 
-This project is meant as an exercise in **databases and database security**. It uses a small employee/pay-raise database to explore authentication, authorization, password hashing, encrypted fields, CSRF protection, local backups, safe restore, audit logging, protected form submissions, and authenticated socket messaging.
+This project is a database security exercise built around a small local employee/pay-raise database. It demonstrates authentication, authorization, password hashing, encrypted fields, CSRF protection, validation, local backups, safe restore, audit logging, protected form submissions, and authenticated socket messaging.
 
-The end goal is a secure, usable **local employee database** that runs on a single admin computer. It is not intended to be enterprise HR software, public SaaS, or an intranet application.
+The goal is a secure, usable local employee database that runs on one admin computer with minimal setup. It is not intended to be an enterprise HR system, public web app, SaaS app, or intranet app.
 
 ## Tech Stack
 
-- **Backend**: Python + Flask
-- **Database**: SQLite
-- **Templates**: HTML + Jinja2
-- **Styling**: CSS
-- **Authentication**: Flask sessions + Werkzeug password hashing
-- **Authorization**: Role-based security levels
-- **Encryption**: AES via PyCryptodome
-- **Networking**: Python sockets + TCP servers
-- **Message Authentication**: HMAC with SHA3-512
-- **Form Protection**: Flask-WTF CSRF protection
-- **Configuration**: python-dotenv environment configuration
+- **Backend:** Python + Flask
+- **Database:** SQLite
+- **Templates:** Server-rendered HTML + Jinja2
+- **Styling:** CSS
+- **Authentication:** Flask sessions + Werkzeug password hashing
+- **Authorization:** Role-based security levels
+- **Encryption:** AES through PyCryptodome
+- **Message Authentication:** HMAC with SHA3-512
+- **Networking:** Python TCP sockets
+- **Form Protection:** Flask-WTF CSRF protection
+- **Configuration:** Local `.env` file loaded through `config.py`
 
 ## Security Features
 
-- Passwords are stored using Werkzeug password hashing
-- Employee passwords are never displayed in the application
-- Logged-in users can change their own passwords after verifying their current password
-- Admin users can reset employee passwords without viewing existing passwords
-- Inactive employee accounts are blocked from logging in
-- Role-based access control restricts pages by employee security level
-- Protected pages re-check the logged-in session against the current database user
-- Stale sessions are cleared when the database user no longer matches the session
-- Selected employee and pay raise fields are stored with AES encryption using a random IV for each encrypted value
-- Form submissions are protected with CSRF tokens using Flask-WTF
-- Flask debug mode is controlled by an environment variable
-- Flask secret key, AES settings, and HMAC secret are loaded from local environment configuration
-- Session cookies are configured with `HttpOnly` and `SameSite=Lax`
-- Local database backups can be created with a timestamped backup script
-- Local database backups can be restored with a safety backup created first
-- Sensitive account actions are recorded in a local audit log
-- Encrypted TCP socket messages are used for pay raise deletion
-- HMAC-authenticated encrypted TCP socket messages are used for pay raise creation
+- Passwords are stored with Werkzeug password hashing.
+- Plaintext employee passwords are never displayed.
+- Logged-in users can change their own passwords.
+- Password changes require the current password.
+- Admin users can reset employee passwords without viewing existing passwords.
+- Inactive employee accounts cannot log in.
+- Admin users can deactivate employee accounts.
+- Admin users can reactivate inactive employee accounts.
+- Admin users cannot deactivate their own account.
+- First admin setup is only available when the `Employee` table is empty.
+- The `/` route redirects to `/setup-admin` when no employee records exist.
+- After the first employee account exists, `/setup-admin` is blocked.
+- Role-based access control restricts routes by employee security level.
+- Unauthorized protected pages use the app's existing 404 behavior.
+- Sessions are checked against the current database user.
+- Sessions are checked against the current stored password hash.
+- Stale sessions are cleared when the database user no longer matches the session.
+- Stale sessions are cleared when the stored password hash no longer matches the session.
+- Selected employee fields are encrypted at rest.
+- Selected pay raise fields are encrypted at rest.
+- AES encryption uses a random IV for each encrypted value.
+- Shared encryption helpers are centralized in `crypto_helpers.py`.
+- Form submissions are protected with Flask-WTF CSRF protection.
+- Session cookies use `HttpOnly`.
+- Session cookies use `SameSite=Lax`.
+- Flask debug mode is controlled by local environment configuration.
+- Flask secret key, AES secret, and HMAC secret are loaded from local `.env` configuration.
+- `.env` is excluded from Git.
+- Local SQLite database files are excluded from Git.
+- Local backup files are excluded from Git.
+- Local database backups can be created with `backup_db.py`.
+- Database restore creates a safety backup before replacing the current database.
+- Database initialization can create missing tables without deleting existing data.
+- Demo reset scripts are separated from safe initialization scripts.
+- Sensitive account actions are recorded in the `AuditLog` table.
+- Audit log records include action, user ID, details, and timestamp.
+- Admin users can view audit log entries.
+- Admin users can filter audit log entries by action, user ID, date range, and details text.
+- Audit log queries use parameterized SQL.
+- Employee list search is performed without exposing password hashes.
+- Pay raise list filters use validated query inputs.
+- Pay raise amount validation rejects blank, non-numeric, zero, negative, and oversized values.
+- Pay raise date validation rejects blank, invalid, too-old, and future dates.
+- Encrypted TCP socket messages are used for pay raise deletion requests.
+- HMAC-authenticated encrypted TCP socket messages are used for pay raise creation requests.
+- HMAC validation helps detect tampered add-pay-raise socket messages.
+- Database access is centralized through `get_db()`.
+- Shared authorization checks are centralized in `auth_helpers.py`.
+- Sensitive account actions use the shared `log_audit()` helper.
 
-## Features
+## Main Features
 
 ### Employee Management
 
-- Create the first administrator account through an initial setup page when the database is empty
-- Add, edit, search, deactivate, and reactivate employee records
+- Create the first administrator account when the database is empty
+- Add employee records
+- Edit employee records
 - Search employees by name, user ID, security level, or active/inactive status
-- View employee records without displaying passwords
+- Deactivate employee accounts
+- Reactivate employee accounts
 - Reset employee passwords as an admin
-- Change own password while logged in
-- Block inactive employee accounts from logging in
+- Change your own password while logged in
+- View employee records without displaying passwords
 
 ### Pay Raise Management
 
 - Add pay raise records directly through Flask
-- View pay raise records
+- View all pay raise records by permission level
 - Filter pay raise records by employee ID, date range, and minimum amount
-- Show pay raises for the currently logged-in user
-- Store pay raise amounts using AES encryption
+- View pay raises for the currently logged-in user
+- Store pay raise amounts with AES encryption
 - Submit encrypted socket-based pay raise deletion requests
 - Submit encrypted and HMAC-authenticated socket-based pay raise creation requests
 
@@ -71,29 +104,32 @@ The end goal is a secure, usable **local employee database** that runs on a sing
 - Create timestamped local database backups
 - Restore a database backup from the `backups/` folder
 - Create a safety backup before restoring over the current database
-- Record selected sensitive actions in the `AuditLog` table
-- Start local setup and app launch with Windows batch scripts
+- Record and filter selected sensitive actions in the `AuditLog` table
+- Start setup and app launch with Windows batch scripts
 
-## Security Features Still To Be Implemented
+## Current Limitations
 
-- Improve long-term AES key management and rotation
-- Continue improving input validation and user feedback
-- Improve error handling and user feedback
-- Add deployment documentation for any future non-local use
-- Replace the Flask development server with a production WSGI server if the project is ever adapted beyond local-only use
+- This app is designed for local use on one admin computer.
+- It uses the Flask development server.
+- It is not packaged as a native desktop app.
+- Long-term encryption key rotation is not implemented.
+- Backup files must still be protected by the local computer/user.
+- It should not be used with real employee data without further review.
 
 ## Getting Started
 
-### Prerequisites
+### Recommended Local Setup on Windows
 
-- Windows
-- Python 3.8+
-- Python launcher for Windows (`py`)
-- pip
+From GitHub, download or clone the project folder first:
 
-### Easy Local Setup
+```bash
+git clone https://github.com/jjhigi/secure-employee-database-flask.git
+cd secure-employee-database-flask
+```
 
-Run:
+Or download the ZIP from GitHub, extract it, and open the extracted project folder.
+
+Then run:
 
 ```bash
 setup.bat
@@ -106,7 +142,7 @@ This script will:
 - Create `.env` from `.env.example` if `.env` does not already exist
 - Initialize the SQLite database tables without deleting existing data
 
-Start the app:
+After setup finishes, start the app:
 
 ```bash
 run.bat
@@ -124,7 +160,21 @@ Open manually if needed:
 http://127.0.0.1:5000
 ```
 
+On first launch, if the database has no employee records, the app redirects to the initial admin setup page. Create the first admin account there, then log in normally.
+
+### Starting the App Later
+
+After the first setup, you usually only need to run:
+
+```bash
+run.bat
+```
+
+You do not need to run `setup.bat` every time.
+
 ### Manual Setup
+
+Use these steps only if you do not want to use the Windows batch scripts.
 
 Create and activate a virtual environment:
 
@@ -169,7 +219,9 @@ Open the app in your browser:
 http://127.0.0.1:5000
 ```
 
-Demo login:
+### Demo Login
+
+If you seeded demo data, you can log in with:
 
 ```text
 Username: PDiana
@@ -190,7 +242,7 @@ If the database has no employee records, opening the app at:
 http://127.0.0.1:5000
 ```
 
-automatically redirects to the first-admin setup page:
+automatically redirects to:
 
 ```text
 http://127.0.0.1:5000/setup-admin
@@ -220,7 +272,7 @@ python reset_demo_db.py
 python setup.py
 ```
 
-> **Warning:** `reset_demo_db.py` and `setup.py` delete existing Employee, EmpPayRaise, and AuditLog records before recreating the demo database. Use `init_db.py` for safer setup.
+> **Warning:** `reset_demo_db.py` and `setup.py` delete existing `Employee`, `EmpPayRaise`, and `AuditLog` records before recreating the demo database. Use `init_db.py` for safer setup.
 
 ## Socket Server Features
 
@@ -261,15 +313,16 @@ Browser  -->  Flask App  -->  encrypted + HMAC socket message
           TCP Server for Pay Raise Creation  -->  SQLite Database
 ```
 
-- Flask handles routing, login, sessions, validation, and page rendering.
+- Flask handles app setup, routing, login, sessions, validation, and page rendering.
 - SQLite stores employee, pay raise, and audit log records locally.
-- Passwords are stored as one-way hashes using Werkzeug password hashing.
-- AES encryption is used for selected stored values, such as names, phone numbers, and pay raise amounts.
-- Role-based security levels control which pages users can access.
-- `AuditLog` records selected sensitive actions such as password changes, password resets, and employee activation changes.
-- Socket servers demonstrate encrypted client/server communication.
-- HMAC validation helps verify that add-pay-raise messages were not tampered with.
-- Routes are organized into Flask Blueprints for authentication/setup, employee/admin actions, and pay raise actions.
+- Jinja templates render server-side pages.
+- Flask Blueprints separate authentication, employee/admin, and pay raise routes.
+- Passwords are stored as one-way hashes.
+- AES encryption protects selected stored values.
+- Role-based security levels control protected pages.
+- Audit logging records selected sensitive account actions.
+- Socket servers demonstrate encrypted local client/server communication.
+- HMAC validation helps verify that add-pay-raise socket messages were not tampered with.
 
 ## Application Routes
 
@@ -287,6 +340,7 @@ Browser  -->  Flask App  -->  encrypted + HMAC socket message
 | GET / POST | `/resetpassword/<user_id>` | Level 1 | Reset an employee password |
 | POST | `/deactivateemployee/<user_id>` | Level 1 | Mark an employee account as inactive |
 | POST | `/reactivateemployee/<user_id>` | Level 1 | Reactivate an inactive employee account |
+| GET | `/auditlog` | Level 1 | View and filter sensitive account action history |
 | GET | `/listpayraises` | Level 2 | List and filter all pay raise records |
 | GET | `/mypayraises` | Yes | Show current user's pay raises |
 | GET / POST | `/addpayraise` | Yes | Add pay raise directly through Flask |
@@ -311,8 +365,10 @@ flask-employee-manager/
 ├── Encryption.py
 ├── ProcessPayRaiseDeletionsServer.py
 ├── AddAPayRaiseServer.py
+├── audit.py
 ├── auth_helpers.py
 ├── crypto_helpers.py
+├── db.py
 ├── validation_constants.py
 ├── routes/
 │   ├── __init__.py
@@ -321,12 +377,14 @@ flask-employee-manager/
 │   └── payraise_routes.py
 ├── requirements.txt
 ├── README.md
+├── PROJECT_NOTES.md
 ├── .gitignore
 ├── static/
 │   └── styles.css
 └── templates/
     ├── addemployee.html
     ├── addpayraise.html
+    ├── auditlog.html
     ├── base.html
     ├── changepassword.html
     ├── editemployee.html
@@ -340,6 +398,19 @@ flask-employee-manager/
     ├── sendaddpayraisehmac.html
     ├── setup_admin.html
     └── submitdeletepayraise.html
+```
+
+## Local Files Not Committed to Git
+
+The following local files and folders should stay private and should not be committed:
+
+```text
+.env
+.venv/
+EmployeeDB.db
+backups/
+__pycache__/
+.idea/
 ```
 
 ## Demo Data Notice
