@@ -31,10 +31,6 @@ FLASK_DEBUG = os.environ.get("FLASK_DEBUG", "0") == "1"
 HMAC_SECRET = get_required_env("HMAC_SECRET").encode("utf-8")
 
 AES_KEY = get_required_env("AES_KEY").encode("utf-8")
-AES_IV = get_required_env("AES_IV").encode("utf-8")
 
 if len(AES_KEY) not in (16, 24, 32):
     raise RuntimeError("AES_KEY must be 16, 24, or 32 characters long.")
-
-if len(AES_IV) != 16:
-    raise RuntimeError("AES_IV must be exactly 16 characters long.")

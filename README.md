@@ -30,7 +30,7 @@ The end goal is a secure, usable **local employee database** that runs on a sing
 - Role-based access control restricts pages by employee security level
 - Protected pages re-check the logged-in session against the current database user
 - Stale sessions are cleared when the database user no longer matches the session
-- Selected employee and pay raise fields are stored with AES encryption
+- Selected employee and pay raise fields are stored with AES encryption using a random IV for each encrypted value
 - Form submissions are protected with CSRF tokens using Flask-WTF
 - Flask debug mode is controlled by an environment variable
 - Flask secret key, AES settings, and HMAC secret are loaded from local environment configuration
@@ -75,7 +75,7 @@ The end goal is a secure, usable **local employee database** that runs on a sing
 
 ## Security Features Still To Be Implemented
 
-- Improve AES key and IV/nonce handling
+- Improve long-term AES key management and rotation
 - Add more complete input validation and field length limits
 - Improve error handling and user feedback
 - Add deployment documentation for any future non-local use
@@ -297,7 +297,7 @@ The seeded demo accounts all use the password `test123`, and the application sto
 
 ## Security Notice
 
-This project demonstrates practical database security concepts for a local Flask application. It should not be used with real employee data unless the remaining limitations are understood and addressed, especially around encryption key handling, input validation, audit log review, backup protection, and deployment configuration.
+This project demonstrates practical database security concepts for a local Flask application. It should not be used with real employee data unless the remaining limitations are understood and addressed, especially around long-term encryption key management, audit log review, backup protection, and deployment configuration.
 
 ## Author
 
