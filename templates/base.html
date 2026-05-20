@@ -20,6 +20,7 @@
         {% if session.get('SecurityLevel') == 1 %}
         <a href="/addemployee">Add Employee</a>
         <a href="/listemployees">List Employees</a>
+        <a href="/listpayraises">List Pay Raises</a>
         <a href="/auditlog">Audit Log</a>
         {% elif session.get('SecurityLevel') == 2 %}
         <a href="/listemployees">List Employees</a>
@@ -27,7 +28,7 @@
         {% endif %}
 
         {% if session.get('SecurityLevel') <= 2 %}
-        <a href="/submitdeletepayraise">Delete Pay Raise Request</a>
+        <a href="/submitdeletepayraise">Void Pay Raise Request</a>
         {% endif %}
 
         <a href="/sendaddpayraisehmac">HMAC Add Pay Raise</a>
