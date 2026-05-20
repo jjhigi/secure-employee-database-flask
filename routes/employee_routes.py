@@ -31,6 +31,26 @@ from validation_constants import (
 employee_bp = Blueprint("employee", __name__)
 
 # --------------------------
+# Security Level Labels
+# --------------------------
+SECURITY_LEVEL_LABELS = {
+    1: "Admin",
+    2: "Manager",
+    3: "Employee",
+}
+
+SECURITY_LEVEL_OPTIONS = [
+    {"value": 1, "label": "1 - Admin"},
+    {"value": 2, "label": "2 - Manager"},
+    {"value": 3, "label": "3 - Employee"},
+]
+
+
+def get_security_level_label(security_level):
+    """Return a user-friendly label for a security level number."""
+    return SECURITY_LEVEL_LABELS.get(security_level, "Unknown")
+
+# --------------------------
 # Add Employee (Admin only)
 # --------------------------
 @employee_bp.route("/addemployee")
@@ -39,7 +59,10 @@ def addemployee():
     if guard:
         return guard
 
-    return render_template("addemployee.html")
+    return render_template(
+        "addemployee.html",
+        security_level_options=SECURITY_LEVEL_OPTIONS,
+    )
 
 
 @employee_bp.route("/addrec", methods=["POST"])
@@ -71,7 +94,7 @@ def addrec():
         errors.append(f"Phone number cannot be longer than {MAX_PHONE_LENGTH} characters.")
 
     if not security_level.isdigit() or not (1 <= int(security_level) <= 3):
-        errors.append("Security level must be 1-3.")
+        errors.append("Security level must be 1 (Admin), 2 (Manager), or 3 (Employee).")
 
     if not password:
         errors.append("Password cannot be empty.")
@@ -130,6 +153,7 @@ def listemployees():
             "Age": r["Age"],
             "PhNum": dec(r["PhNum"]),
             "SecurityLevel": r["SecurityLevel"],
+            "SecurityLevelLabel": get_security_level_label(r["SecurityLevel"]),
             "IsActive": r["IsActive"],
             "Status": "Active" if r["IsActive"] == 1 else "Inactive",
         }
@@ -141,6 +165,7 @@ def listemployees():
             matches_user_id = search_lower in str(employee["UserID"]).lower()
             matches_security_level = (
                     search_lower in str(employee["SecurityLevel"]).lower()
+                    or search_lower in employee["SecurityLevelLabel"].lower()
             )
             matches_status = search_lower in employee["Status"].lower()
 
@@ -209,6 +234,9 @@ def editemployee(user_id):
             if errors:
                 return render_template("result.html", msg=", ".join(errors))
 
+            old_security_level = row["SecurityLevel"]
+            new_security_level = int(security_level)
+
             cur.execute(
                 """
                 UPDATE Employee
@@ -222,11 +250,24 @@ def editemployee(user_id):
                     enc(name),
                     int(age),
                     enc(phone),
-                    int(security_level),
+                    new_security_level,
                     user_id,
                 ),
             )
             con.commit()
+
+            if old_security_level != new_security_level:
+                old_label = get_security_level_label(old_security_level)
+                new_label = get_security_level_label(new_security_level)
+
+                log_audit(
+                    "CHANGE_SECURITY_LEVEL",
+                    (
+                        f"Changed UserID {user_id} security level from "
+                        f"{old_label} ({old_security_level}) to "
+                        f"{new_label} ({new_security_level})."
+                    ),
+                )
 
             return redirect(url_for("employee.listemployees"))
 
@@ -238,7 +279,11 @@ def editemployee(user_id):
         "SecurityLevel": row["SecurityLevel"],
     }
 
-    return render_template("editemployee.html", employee=employee)
+    return render_template(
+        "editemployee.html",
+        employee=employee,
+        security_level_options=SECURITY_LEVEL_OPTIONS,
+    )
 
 
 # --------------------------

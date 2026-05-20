@@ -14,8 +14,12 @@
     <label>Phone Number:</label><br>
     <input type="tel" name="PhNum"><br><br>
 
-    <label>Security Level:</label><br>
-    <input type="text" name="SecurityLevel"><br><br>
+    <label for="SecurityLevel">Security Level:</label><br>
+    <select id="SecurityLevel" name="SecurityLevel">
+        {% for option in security_level_options %}
+        <option value="{{ option['value'] }}">{{ option["label"] }}</option>
+        {% endfor %}
+    </select><br><br>
 
     <label>Temporary Password:</label><br>
     <input type="password" name="Password"><br><br>

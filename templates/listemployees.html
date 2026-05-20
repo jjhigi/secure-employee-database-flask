@@ -23,7 +23,7 @@
         <td>Name</td>
         <td>Age</td>
         <td>Phone Number</td>
-        <td>Security Level</td>
+        <td>Role</td>
         <td>Status</td>
         <td>Actions</td>
     </tr>
@@ -34,7 +34,7 @@
         <td>{{ row["Name"] }}</td>
         <td>{{ row["Age"] }}</td>
         <td>{{ row["PhNum"] }}</td>
-        <td>{{ row["SecurityLevel"] }}</td>
+        <td>{{ row["SecurityLevelLabel"] }} ({{ row["SecurityLevel"] }})</td>
         <td>{{ row["Status"] }}</td>
         <td>
             <a href="/editemployee/{{ row['UserID'] }}">Edit</a>
