@@ -29,7 +29,9 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 # Local imports
 import Encryption
+from audit import log_audit
 from config import FLASK_DEBUG, FLASK_SECRET_KEY, HMAC_SECRET
+from db import get_db
 
 app = Flask(__name__)
 app.secret_key = FLASK_SECRET_KEY
@@ -62,11 +64,6 @@ MAX_RAISE_AMOUNT = 1000000.00
 # --------------------------
 # Helpers
 # --------------------------
-def get_db():
-    """Open a new connection to the EmployeeDB database."""
-    return sql.connect("EmployeeDB.db")
-
-
 def employee_count():
     """Return the number of employee records in the database."""
     with get_db() as con:
@@ -83,27 +80,6 @@ def enc(s: str) -> str:
 def dec(s: str) -> str:
     """Decrypt text from the database back into a normal string."""
     return Encryption.cipher.decrypt(s)
-
-
-def log_audit(action: str, details: str = ""):
-    """Write a sensitive action to the local audit log."""
-    user_id = session.get("UserID")
-
-    with get_db() as con:
-        cur = con.cursor()
-        cur.execute(
-            """
-            INSERT INTO AuditLog (UserID, Action, Details, CreatedAt)
-            VALUES (?, ?, ?, ?)
-            """,
-            (
-                user_id,
-                action,
-                details,
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            ),
-        )
-        con.commit()
 
 
 # --------------------------
