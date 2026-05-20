@@ -35,6 +35,57 @@ HMAC_SEPARATOR = "^%$"
 HMAC_HOST = "localhost"
 HMAC_PORT = 8888
 
+
+# --------------------------
+# Validation Helpers
+# --------------------------
+def validate_payraise_date(date_text, field_name):
+    """Validate a pay raise date and return a list of errors."""
+    errors = []
+
+    if not date_text:
+        errors.append(f"{field_name} is required.")
+        return errors
+
+    try:
+        date_value = datetime.strptime(date_text, "%Y-%m-%d").date()
+    except ValueError:
+        errors.append(f"{field_name} must be a valid date in YYYY-MM-DD format.")
+        return errors
+
+    earliest_allowed_date = datetime.strptime("2000-01-01", "%Y-%m-%d").date()
+    today = datetime.today().date()
+
+    if date_value < earliest_allowed_date:
+        errors.append(f"{field_name} cannot be before 2000-01-01.")
+    elif date_value > today:
+        errors.append(f"{field_name} cannot be in the future.")
+
+    return errors
+
+
+def validate_raise_amount(amount_text, field_name):
+    """Validate a raise amount and return a list of errors plus the float value."""
+    errors = []
+    amount_value = None
+
+    if not amount_text:
+        errors.append(f"{field_name} is required.")
+        return errors, amount_value
+
+    try:
+        amount_value = float(amount_text)
+
+        if amount_value <= 0:
+            errors.append(f"{field_name} must be greater than 0.")
+        elif amount_value > MAX_RAISE_AMOUNT:
+            errors.append(f"{field_name} cannot be more than ${MAX_RAISE_AMOUNT:,.2f}.")
+    except ValueError:
+        errors.append(f"{field_name} must be a numeric value.")
+
+    return errors, amount_value
+
+
 # --------------------------
 # List Pay Raises (Level 2)
 # --------------------------
@@ -158,22 +209,10 @@ def addpayraise():
 
         errors = []
 
-        if not date:
-            errors.append("Date is required.")
-        else:
-            try:
-                datetime.strptime(date, "%Y-%m-%d")
-            except ValueError:
-                errors.append("Invalid date format.")
+        errors.extend(validate_payraise_date(date, "Date"))
 
-        try:
-            amount_value = float(amount)
-            if amount_value <= 0:
-                errors.append("Raise must be positive.")
-            elif amount_value > MAX_RAISE_AMOUNT:
-                errors.append(f"Raise cannot be more than ${MAX_RAISE_AMOUNT:,.2f}.")
-        except ValueError:
-            errors.append("Raise must be a number.")
+        amount_errors, amount_value = validate_raise_amount(amount, "Raise amount")
+        errors.extend(amount_errors)
 
         if errors:
             return render_template("result.html", msg=", ".join(errors))
@@ -220,13 +259,7 @@ def submitdeletepayraise():
         elif not emp_id.isdigit():
             errors.append("EmpID must be a number.")
 
-        if not date:
-            errors.append("PayRaiseDate is required.")
-        else:
-            try:
-                datetime.strptime(date, "%Y-%m-%d")
-            except ValueError:
-                errors.append("PayRaiseDate must be YYYY-MM-DD.")
+        errors.extend(validate_payraise_date(date, "PayRaiseDate"))
 
         if errors:
             return render_template("result.html", msg=", ".join(errors))
@@ -312,27 +345,10 @@ def sendaddpayraisehmac():
             if not row:
                 errors.append("EmpID does not exist in the Employee table.")
 
-        if not payraise_date:
-            errors.append("PayRaiseDate is required.")
-        else:
-            try:
-                datetime.strptime(payraise_date, "%Y-%m-%d")
-            except ValueError:
-                errors.append("PayRaiseDate must be a valid date in YYYY-MM-DD format.")
+        errors.extend(validate_payraise_date(payraise_date, "PayRaiseDate"))
 
-        if not raise_amt:
-            errors.append("RaiseAmt is required.")
-        else:
-            try:
-                amount_value = float(raise_amt)
-                if amount_value <= 0:
-                    errors.append("RaiseAmt must be greater than 0.")
-                elif amount_value > MAX_RAISE_AMOUNT:
-                    errors.append(
-                        f"RaiseAmt cannot be more than ${MAX_RAISE_AMOUNT:,.2f}."
-                    )
-            except ValueError:
-                errors.append("RaiseAmt must be a numeric value.")
+        amount_errors, amount_value = validate_raise_amount(raise_amt, "RaiseAmt")
+        errors.extend(amount_errors)
 
         if errors:
             return render_template("result.html", msg=", ".join(errors))
