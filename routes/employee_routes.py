@@ -361,22 +361,88 @@ def reactivateemployee(user_id):
 # --------------------------
 @employee_bp.route("/auditlog")
 def auditlog():
-    """Show recent audit log entries. Admin only."""
+    """Show recent audit log entries with optional filters. Admin only."""
     guard = require_level({1})
     if guard:
         return guard
 
+    action = request.args.get("action", "").strip()
+    user_id = request.args.get("user_id", "").strip()
+    start_date = request.args.get("start_date", "").strip()
+    end_date = request.args.get("end_date", "").strip()
+    search = request.args.get("search", "").strip()
+
+    filters = {
+        "action": action,
+        "user_id": user_id,
+        "start_date": start_date,
+        "end_date": end_date,
+        "search": search,
+    }
+
+    errors = []
+    where_clauses = []
+    params = []
+
+    if action:
+        where_clauses.append("Action = ?")
+        params.append(action)
+
+    if user_id:
+        if user_id.isdigit():
+            where_clauses.append("UserID = ?")
+            params.append(int(user_id))
+        else:
+            errors.append("User ID must be a number.")
+
+    if start_date:
+        where_clauses.append("CreatedAt >= ?")
+        params.append(start_date + " 00:00:00")
+
+    if end_date:
+        where_clauses.append("CreatedAt <= ?")
+        params.append(end_date + " 23:59:59")
+
+    if search:
+        where_clauses.append("Details LIKE ?")
+        params.append(f"%{search}%")
+
+    query = """
+        SELECT AuditLogID, UserID, Action, Details, CreatedAt
+        FROM AuditLog
+    """
+
+    if where_clauses:
+        query += " WHERE " + " AND ".join(where_clauses)
+
+    query += """
+        ORDER BY CreatedAt DESC, AuditLogID DESC
+        LIMIT 100
+    """
+
     with get_db() as con:
         con.row_factory = sql.Row
         cur = con.cursor()
+
         cur.execute(
             """
-            SELECT AuditLogID, UserID, Action, Details, CreatedAt
+            SELECT DISTINCT Action
             FROM AuditLog
-            ORDER BY CreatedAt DESC, AuditLogID DESC
-                LIMIT 100
+            ORDER BY Action
             """
         )
-        rows = cur.fetchall()
+        actions = cur.fetchall()
 
-    return render_template("auditlog.html", rows=rows)
+        if errors:
+            rows = []
+        else:
+            cur.execute(query, params)
+            rows = cur.fetchall()
+
+    return render_template(
+        "auditlog.html",
+        rows=rows,
+        actions=actions,
+        filters=filters,
+        errors=errors,
+    )
