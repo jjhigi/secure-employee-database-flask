@@ -13,18 +13,17 @@ from datetime import datetime
 
 from flask import (
     Blueprint,
-    abort,
     render_template,
     request,
     session,
 )
+from auth_helpers import require_level
 from config import HMAC_SECRET
 from db import get_db
 from routes.auth_routes import dec, enc, require_login
 import Encryption
 
 payraise_bp = Blueprint("payraise", __name__)
-
 
 # --------------------------
 # Socket / HMAC Constants
@@ -34,26 +33,10 @@ HMAC_SEPARATOR = "^%$"
 HMAC_HOST = "localhost"
 HMAC_PORT = 8888
 
-
 # --------------------------
 # Validation Constants
 # --------------------------
 MAX_RAISE_AMOUNT = 1000000.00
-
-
-# --------------------------
-# Access Control
-# --------------------------
-def require_level(allowed):
-    """Require that the current user has one of the allowed security levels."""
-    guard = require_login()
-    if guard:
-        return guard
-
-    if session.get("SecurityLevel") not in allowed:
-        return abort(404)
-
-    return None
 
 
 # --------------------------
