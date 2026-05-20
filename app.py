@@ -51,6 +51,16 @@ HMAC_PORT = 8888
 
 
 # --------------------------
+# Validation Constants
+# --------------------------
+MAX_NAME_LENGTH = 50
+MAX_PHONE_LENGTH = 20
+MIN_PASSWORD_LENGTH = 8
+MAX_PASSWORD_LENGTH = 128
+MAX_RAISE_AMOUNT = 1000000.00
+
+
+# --------------------------
 # Helpers
 # --------------------------
 def get_db():
@@ -171,15 +181,23 @@ def setup_admin():
 
         if not name:
             errors.append("Name cannot be empty.")
+        elif len(name) > MAX_NAME_LENGTH:
+            errors.append(f"Name cannot be longer than {MAX_NAME_LENGTH} characters.")
 
         if not age.isdigit() or not (1 <= int(age) <= 120):
             errors.append("Age must be 1-120.")
 
         if not phone:
             errors.append("Phone number cannot be empty.")
+        elif len(phone) > MAX_PHONE_LENGTH:
+            errors.append(f"Phone number cannot be longer than {MAX_PHONE_LENGTH} characters.")
 
         if not password:
             errors.append("Password cannot be empty.")
+        elif len(password) < MIN_PASSWORD_LENGTH:
+            errors.append(f"Password must be at least {MIN_PASSWORD_LENGTH} characters.")
+        elif len(password) > MAX_PASSWORD_LENGTH:
+            errors.append(f"Password cannot be longer than {MAX_PASSWORD_LENGTH} characters.")
 
         if password != confirm_password:
             errors.append("Passwords do not match.")
@@ -297,18 +315,26 @@ def addrec():
 
     if not name:
         errors.append("Name cannot be empty.")
+    elif len(name) > MAX_NAME_LENGTH:
+        errors.append(f"Name cannot be longer than {MAX_NAME_LENGTH} characters.")
 
     if not age.isdigit() or not (1 <= int(age) <= 120):
         errors.append("Age must be 1-120.")
 
     if not phone:
         errors.append("Phone number cannot be empty.")
+    elif len(phone) > MAX_PHONE_LENGTH:
+        errors.append(f"Phone number cannot be longer than {MAX_PHONE_LENGTH} characters.")
 
     if not security_level.isdigit() or not (1 <= int(security_level) <= 3):
         errors.append("Security level must be 1-3.")
 
     if not password:
         errors.append("Password cannot be empty.")
+    elif len(password) < MIN_PASSWORD_LENGTH:
+        errors.append(f"Password must be at least {MIN_PASSWORD_LENGTH} characters.")
+    elif len(password) > MAX_PASSWORD_LENGTH:
+        errors.append(f"Password cannot be longer than {MAX_PASSWORD_LENGTH} characters.")
 
     if errors:
         return render_template("result.html", msg=", ".join(errors))
@@ -420,12 +446,16 @@ def editemployee(user_id):
 
             if not name:
                 errors.append("Name cannot be empty.")
+            elif len(name) > MAX_NAME_LENGTH:
+                errors.append(f"Name cannot be longer than {MAX_NAME_LENGTH} characters.")
 
             if not age.isdigit() or not (1 <= int(age) <= 120):
                 errors.append("Age must be 1-120.")
 
             if not phone:
                 errors.append("Phone number cannot be empty.")
+            elif len(phone) > MAX_PHONE_LENGTH:
+                errors.append(f"Phone number cannot be longer than {MAX_PHONE_LENGTH} characters.")
 
             if not security_level.isdigit() or not (1 <= int(security_level) <= 3):
                 errors.append("Security level must be 1-3.")
@@ -489,6 +519,10 @@ def changepassword():
 
         if not new_password:
             errors.append("New password cannot be empty.")
+        elif len(new_password) < MIN_PASSWORD_LENGTH:
+            errors.append(f"New password must be at least {MIN_PASSWORD_LENGTH} characters.")
+        elif len(new_password) > MAX_PASSWORD_LENGTH:
+            errors.append(f"New password cannot be longer than {MAX_PASSWORD_LENGTH} characters.")
 
         if new_password != confirm_password:
             errors.append("New passwords do not match.")
@@ -572,6 +606,10 @@ def resetpassword(user_id):
 
             if not password:
                 errors.append("Password cannot be empty.")
+            elif len(password) < MIN_PASSWORD_LENGTH:
+                errors.append(f"Password must be at least {MIN_PASSWORD_LENGTH} characters.")
+            elif len(password) > MAX_PASSWORD_LENGTH:
+                errors.append(f"Password cannot be longer than {MAX_PASSWORD_LENGTH} characters.")
 
             if password != confirm_password:
                 errors.append("Passwords do not match.")
@@ -780,6 +818,8 @@ def addpayraise():
             amount_value = float(amount)
             if amount_value <= 0:
                 errors.append("Raise must be positive.")
+            elif amount_value > MAX_RAISE_AMOUNT:
+                errors.append(f"Raise cannot be more than ${MAX_RAISE_AMOUNT:,.2f}.")
         except ValueError:
             errors.append("Raise must be a number.")
 
@@ -935,6 +975,8 @@ def sendaddpayraisehmac():
                 amount_value = float(raise_amt)
                 if amount_value <= 0:
                     errors.append("RaiseAmt must be greater than 0.")
+                elif amount_value > MAX_RAISE_AMOUNT:
+                    errors.append(f"RaiseAmt cannot be more than ${MAX_RAISE_AMOUNT:,.2f}.")
             except ValueError:
                 errors.append("RaiseAmt must be a numeric value.")
 
