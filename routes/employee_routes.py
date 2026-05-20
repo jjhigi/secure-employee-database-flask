@@ -9,7 +9,6 @@ import sqlite3 as sql
 
 from flask import (
     Blueprint,
-    abort,
     redirect,
     render_template,
     request,
@@ -19,8 +18,9 @@ from flask import (
 from werkzeug.security import generate_password_hash
 
 from audit import log_audit
+from auth_helpers import require_level
 from db import get_db
-from routes.auth_routes import dec, enc, require_login
+from routes.auth_routes import dec, enc
 
 employee_bp = Blueprint("employee", __name__)
 
@@ -31,21 +31,6 @@ MAX_NAME_LENGTH = 50
 MAX_PHONE_LENGTH = 20
 MIN_PASSWORD_LENGTH = 8
 MAX_PASSWORD_LENGTH = 128
-
-
-# --------------------------
-# Access Control
-# --------------------------
-def require_level(allowed):
-    """Require that the current user has one of the allowed security levels."""
-    guard = require_login()
-    if guard:
-        return guard
-
-    if session.get("SecurityLevel") not in allowed:
-        return abort(404)
-
-    return None
 
 
 # --------------------------
