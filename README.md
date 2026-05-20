@@ -184,7 +184,13 @@ Password: test123
 
 ## Initial Admin Setup
 
-If the database has no employee records, create the first admin account at:
+If the database has no employee records, opening the app at:
+
+```text
+http://127.0.0.1:5000
+```
+
+automatically redirects to the first-admin setup page:
 
 ```text
 http://127.0.0.1:5000/setup-admin
