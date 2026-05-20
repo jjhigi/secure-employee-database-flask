@@ -21,17 +21,14 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from audit import log_audit
 from crypto_helpers import dec, enc
 from db import get_db
+from validation_constants import (
+    MAX_NAME_LENGTH,
+    MAX_PHONE_LENGTH,
+    MIN_PASSWORD_LENGTH,
+    MAX_PASSWORD_LENGTH,
+)
 
 auth_bp = Blueprint("auth", __name__)
-
-# --------------------------
-# Validation Constants
-# --------------------------
-MAX_NAME_LENGTH = 50
-MAX_PHONE_LENGTH = 20
-MIN_PASSWORD_LENGTH = 8
-MAX_PASSWORD_LENGTH = 128
-
 
 # --------------------------
 # Helpers

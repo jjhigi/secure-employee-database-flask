@@ -21,17 +21,14 @@ from audit import log_audit
 from auth_helpers import require_level
 from db import get_db
 from crypto_helpers import dec, enc
+from validation_constants import (
+    MAX_NAME_LENGTH,
+    MAX_PHONE_LENGTH,
+    MIN_PASSWORD_LENGTH,
+    MAX_PASSWORD_LENGTH,
+)
 
 employee_bp = Blueprint("employee", __name__)
-
-# --------------------------
-# Validation Constants
-# --------------------------
-MAX_NAME_LENGTH = 50
-MAX_PHONE_LENGTH = 20
-MIN_PASSWORD_LENGTH = 8
-MAX_PASSWORD_LENGTH = 128
-
 
 # --------------------------
 # Add Employee (Admin only)
