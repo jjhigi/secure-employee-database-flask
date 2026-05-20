@@ -67,41 +67,6 @@ MAX_RAISE_AMOUNT = 1000000.00
 # --------------------------
 # Access Control
 # --------------------------
-def require_login():
-    """If the user is not logged in, send them to the login page."""
-    if "UserID" not in session:
-        return render_template("login.html")
-
-    with get_db() as con:
-        con.row_factory = sql.Row
-        cur = con.cursor()
-        cur.execute(
-            """
-            SELECT UserID, Name, SecurityLevel, PasswordHash, IsActive
-            FROM Employee
-            WHERE UserID = ?
-            """,
-            (session["UserID"],),
-        )
-        row = cur.fetchone()
-
-    if not row or row["IsActive"] != 1:
-        session.clear()
-        flash("Your session is no longer valid. Please log in again.")
-        return redirect(url_for("auth.home"))
-
-    if session.get("PasswordHash") != row["PasswordHash"]:
-        session.clear()
-        flash("Your session is no longer valid. Please log in again.")
-        return redirect(url_for("auth.login"))
-
-    # Refresh session values from the database in case the account changed.
-    session["name"] = dec(row["Name"])
-    session["SecurityLevel"] = int(row["SecurityLevel"])
-
-    return None
-
-
 def require_level(allowed):
     """Require that the current user has one of the allowed security levels."""
     guard = require_login()
