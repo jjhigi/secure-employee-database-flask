@@ -35,6 +35,9 @@ The goal is a secure, usable local employee database that runs on one admin comp
 - The `/` route redirects to `/setup-admin` when no employee records exist.
 - After the first employee account exists, `/setup-admin` is blocked.
 - Role-based access control restricts routes by employee security level.
+- Level 1 admin users can manage employee accounts, view audit logs, list employees, list all pay raises, and void pay raises.
+- Level 2 manager users can list employees, list all pay raises, and void pay raises, but cannot edit employee accounts, reset passwords, deactivate users, or view audit logs.
+- Level 3 employee users can view their own pay raises, add their own pay raises, and change their own password.
 - Unauthorized protected pages use the app's existing 404 behavior.
 - Sessions are checked against the current database user.
 - Sessions are checked against the current stored password hash.
@@ -52,6 +55,7 @@ The goal is a secure, usable local employee database that runs on one admin comp
 - `.env` is excluded from Git.
 - Local SQLite database files are excluded from Git.
 - Local backup files are excluded from Git.
+- Local project notes are excluded from Git.
 - Local database backups can be created with `backup_db.py`.
 - Database restore creates a safety backup before replacing the current database.
 - Database initialization can create missing tables without deleting existing data.
@@ -75,6 +79,14 @@ The goal is a secure, usable local employee database that runs on one admin comp
 - Shared authorization checks are centralized in `auth_helpers.py`.
 - Sensitive account actions use the shared `log_audit()` helper.
 
+## Security Levels
+
+| Level | Role | Main Permissions |
+|-------|------|------------------|
+| 1 | Admin | Manage employees, reset passwords, deactivate/reactivate accounts, view audit logs, list employees, list all pay raises, and void pay raises |
+| 2 | Manager | List employees, list all pay raises, and void pay raises |
+| 3 | Employee | View own pay raises, add own pay raises, and change own password |
+
 ## Main Features
 
 ### Employee Management
@@ -82,7 +94,7 @@ The goal is a secure, usable local employee database that runs on one admin comp
 - Create the first administrator account when the database is empty
 - Add employee records
 - Edit employee records
-- Search employees by name, user ID, security level, or active/inactive status
+- Search employees by name, user ID, security level, role label, or active/inactive status
 - Deactivate employee accounts
 - Reactivate employee accounts
 - Reset employee passwords as an admin
@@ -92,11 +104,11 @@ The goal is a secure, usable local employee database that runs on one admin comp
 ### Pay Raise Management
 
 - Add pay raise records directly through Flask
-- View all pay raise records by permission level
+- View all pay raise records as a Level 1 admin or Level 2 manager
 - Filter pay raise records by employee ID, date range, and minimum amount
-- View pay raises for the currently logged-in user
+- View active pay raises for the currently logged-in user
 - Store pay raise amounts with AES encryption
-- Submit encrypted socket-based pay raise void requests
+- Submit encrypted socket-based pay raise void requests as a Level 1 admin or Level 2 manager
 - Keep voided pay raise records for history instead of permanently deleting them
 - Submit encrypted and HMAC-authenticated socket-based pay raise creation requests
 
@@ -117,6 +129,7 @@ The goal is a secure, usable local employee database that runs on one admin comp
 - This app is designed for local use on one admin computer.
 - It uses the Flask development server.
 - It is not packaged as a native desktop app.
+- The terminal window must stay open while the app is running.
 - Long-term encryption key rotation is not implemented.
 - Backup files must still be protected by the local computer/user.
 - It should not be used with real employee data without further review.
@@ -158,6 +171,8 @@ This script will:
 - Activate the local virtual environment
 - Open the app in the browser
 - Start the Flask development server
+
+Keep the terminal window open while using the app. Closing the terminal stops the local Flask server.
 
 Open manually if needed:
 
@@ -223,6 +238,8 @@ Open the app in your browser:
 ```text
 http://127.0.0.1:5000
 ```
+
+Keep the terminal window open while using the app.
 
 ### Demo Login
 
@@ -347,8 +364,8 @@ Browser  -->  Flask App  -->  encrypted + HMAC socket message
 | POST | `/deactivateemployee/<user_id>` | Level 1 | Mark an employee account as inactive |
 | POST | `/reactivateemployee/<user_id>` | Level 1 | Reactivate an inactive employee account |
 | GET | `/auditlog` | Level 1 | View and filter sensitive account action history |
-| GET | `/listpayraises` | Level 2 | List and filter all pay raise records |
-| GET | `/mypayraises` | Yes | Show current user's pay raises |
+| GET | `/listpayraises` | Level 1 or 2 | List and filter all pay raise records |
+| GET | `/mypayraises` | Yes | Show current user's active pay raises |
 | GET / POST | `/addpayraise` | Yes | Add pay raise directly through Flask |
 | GET / POST | `/submitdeletepayraise` | Level 1 or 2 | Send encrypted void request to TCP server |
 | GET / POST | `/sendaddpayraisehmac` | Yes | Send encrypted and authenticated add-pay-raise message |
@@ -383,7 +400,6 @@ flask-employee-manager/
 │   └── payraise_routes.py
 ├── requirements.txt
 ├── README.md
-├── PROJECT_NOTES.md
 ├── .gitignore
 ├── static/
 │   └── styles.css
@@ -417,6 +433,7 @@ EmployeeDB.db
 backups/
 __pycache__/
 .idea/
+PROJECT_NOTES.md
 ```
 
 ## Demo Data Notice
