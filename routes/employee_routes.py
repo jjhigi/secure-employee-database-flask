@@ -22,9 +22,7 @@ from audit import log_audit
 from db import get_db
 from routes.auth_routes import dec, enc, require_login
 
-
 employee_bp = Blueprint("employee", __name__)
-
 
 # --------------------------
 # Validation Constants
@@ -394,7 +392,7 @@ def auditlog():
             SELECT AuditLogID, UserID, Action, Details, CreatedAt
             FROM AuditLog
             ORDER BY CreatedAt DESC, AuditLogID DESC
-            LIMIT 100
+                LIMIT 100
             """
         )
         rows = cur.fetchall()
