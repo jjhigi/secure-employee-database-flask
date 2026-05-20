@@ -32,6 +32,7 @@ import Encryption
 from audit import log_audit
 from config import FLASK_DEBUG, FLASK_SECRET_KEY, HMAC_SECRET
 from db import get_db
+from routes.auth_routes import auth_bp, dec, enc, require_login
 
 app = Flask(__name__)
 app.secret_key = FLASK_SECRET_KEY
@@ -42,6 +43,8 @@ app.config.update(
 )
 
 csrf = CSRFProtect(app)
+
+app.register_blueprint(auth_bp)
 
 # --------------------------
 # Socket / HMAC Constants
@@ -59,27 +62,6 @@ MAX_PHONE_LENGTH = 20
 MIN_PASSWORD_LENGTH = 8
 MAX_PASSWORD_LENGTH = 128
 MAX_RAISE_AMOUNT = 1000000.00
-
-
-# --------------------------
-# Helpers
-# --------------------------
-def employee_count():
-    """Return the number of employee records in the database."""
-    with get_db() as con:
-        cur = con.cursor()
-        cur.execute("SELECT COUNT(*) FROM Employee")
-        return cur.fetchone()[0]
-
-
-def enc(s: str) -> str:
-    """Encrypt a Python string and return text."""
-    return Encryption.cipher.encrypt(s.encode("utf-8")).decode("utf-8")
-
-
-def dec(s: str) -> str:
-    """Decrypt text from the database back into a normal string."""
-    return Encryption.cipher.decrypt(s)
 
 
 # --------------------------
@@ -106,12 +88,12 @@ def require_login():
     if not row or row["IsActive"] != 1:
         session.clear()
         flash("Your session is no longer valid. Please log in again.")
-        return redirect(url_for("login"))
+        return redirect(url_for("auth.home"))
 
     if session.get("PasswordHash") != row["PasswordHash"]:
         session.clear()
         flash("Your session is no longer valid. Please log in again.")
-        return redirect(url_for("login"))
+        return redirect(url_for("auth.login"))
 
     # Refresh session values from the database in case the account changed.
     session["name"] = dec(row["Name"])
@@ -131,144 +113,6 @@ def require_level(allowed):
         return abort(404)
 
     return None
-
-
-# --------------------------
-# Home / Authentication
-# --------------------------
-@app.route("/setup-admin", methods=["GET", "POST"])
-def setup_admin():
-    """Create the first admin account if the Employee table is empty."""
-    if employee_count() > 0:
-        return render_template(
-            "result.html",
-            msg="Initial admin setup is already complete.",
-        )
-
-    if request.method == "POST":
-        name = request.form.get("Name", "").strip()
-        age = request.form.get("Age", "").strip()
-        phone = request.form.get("PhNum", "").strip()
-        password = request.form.get("Password", "").strip()
-        confirm_password = request.form.get("ConfirmPassword", "").strip()
-
-        errors = []
-
-        if not name:
-            errors.append("Name cannot be empty.")
-        elif len(name) > MAX_NAME_LENGTH:
-            errors.append(f"Name cannot be longer than {MAX_NAME_LENGTH} characters.")
-
-        if not age.isdigit() or not (1 <= int(age) <= 120):
-            errors.append("Age must be 1-120.")
-
-        if not phone:
-            errors.append("Phone number cannot be empty.")
-        elif len(phone) > MAX_PHONE_LENGTH:
-            errors.append(f"Phone number cannot be longer than {MAX_PHONE_LENGTH} characters.")
-
-        if not password:
-            errors.append("Password cannot be empty.")
-        elif len(password) < MIN_PASSWORD_LENGTH:
-            errors.append(f"Password must be at least {MIN_PASSWORD_LENGTH} characters.")
-        elif len(password) > MAX_PASSWORD_LENGTH:
-            errors.append(f"Password cannot be longer than {MAX_PASSWORD_LENGTH} characters.")
-
-        if password != confirm_password:
-            errors.append("Passwords do not match.")
-
-        if errors:
-            return render_template("result.html", msg=", ".join(errors))
-
-        with get_db() as con:
-            cur = con.cursor()
-            cur.execute(
-                """
-                INSERT INTO Employee
-                    (Name, Age, PhNum, SecurityLevel, PasswordHash, IsActive)
-                VALUES (?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    enc(name),
-                    int(age),
-                    enc(phone),
-                    1,
-                    generate_password_hash(password),
-                    1,
-                ),
-            )
-            con.commit()
-
-        flash("Initial admin account created. Please log in.")
-        return redirect(url_for("login"))
-
-    return render_template("setup_admin.html")
-
-
-@app.route("/")
-def home():
-    if employee_count() == 0:
-        return redirect(url_for("setup_admin"))
-
-    guard = require_login()
-    if guard:
-        return guard
-
-    return render_template("home.html", name=session.get("name"))
-
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    """Log in a user by matching encrypted username and verifying the password hash."""
-    if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        password = request.form.get("password", "")
-
-        matching_user = None
-
-        with get_db() as con:
-            con.row_factory = sql.Row
-            cur = con.cursor()
-            cur.execute("SELECT * FROM Employee")
-            rows = cur.fetchall()
-
-        for row in rows:
-            try:
-                decrypted_name = dec(row["Name"])
-            except Exception:
-                continue
-
-            if decrypted_name == username:
-                matching_user = row
-                break
-
-        if (
-                matching_user
-                and matching_user["IsActive"] == 1
-                and check_password_hash(matching_user["PasswordHash"], password)
-        ):
-            # Store the logged-in user's ID, display name, and security level.
-            session.clear()
-            session["UserID"] = matching_user["UserID"]
-            session["name"] = dec(matching_user["Name"])
-            session["SecurityLevel"] = int(matching_user["SecurityLevel"])
-            session["PasswordHash"] = matching_user["PasswordHash"]
-
-            flash("Login successful.")
-            return redirect(url_for("home"))
-
-        session.clear()
-        flash("Invalid username and/or password!")
-        return render_template("login.html")
-
-    return render_template("login.html")
-
-
-@app.route("/logout")
-def logout():
-    """Log out the current user by clearing the session."""
-    session.clear()
-    return redirect(url_for("login"))
 
 
 # --------------------------
@@ -481,81 +325,6 @@ def editemployee(user_id):
 
 
 # --------------------------
-# Change Own Password
-# --------------------------
-@app.route("/changepassword", methods=["GET", "POST"])
-def changepassword():
-    """Allow the logged-in user to change their own password."""
-    guard = require_login()
-    if guard:
-        return guard
-
-    user_id = session["UserID"]
-
-    if request.method == "POST":
-        current_password = request.form.get("CurrentPassword", "").strip()
-        new_password = request.form.get("NewPassword", "").strip()
-        confirm_password = request.form.get("ConfirmPassword", "").strip()
-
-        errors = []
-
-        if not current_password:
-            errors.append("Current password cannot be empty.")
-
-        if not new_password:
-            errors.append("New password cannot be empty.")
-        elif len(new_password) < MIN_PASSWORD_LENGTH:
-            errors.append(f"New password must be at least {MIN_PASSWORD_LENGTH} characters.")
-        elif len(new_password) > MAX_PASSWORD_LENGTH:
-            errors.append(f"New password cannot be longer than {MAX_PASSWORD_LENGTH} characters.")
-
-        if new_password != confirm_password:
-            errors.append("New passwords do not match.")
-
-        with get_db() as con:
-            con.row_factory = sql.Row
-            cur = con.cursor()
-            cur.execute(
-                "SELECT PasswordHash FROM Employee WHERE UserID=?",
-                (user_id,),
-            )
-            row = cur.fetchone()
-
-        if not row:
-            errors.append("User account was not found.")
-        elif current_password and not check_password_hash(
-                row["PasswordHash"],
-                current_password,
-        ):
-            errors.append("Current password is incorrect.")
-
-        if errors:
-            return render_template("result.html", msg=", ".join(errors))
-
-        new_password_hash = generate_password_hash(new_password)
-
-        with get_db() as con:
-            cur = con.cursor()
-            cur.execute(
-                """
-                UPDATE Employee
-                SET PasswordHash=?
-                WHERE UserID = ?
-                """,
-                (new_password_hash, user_id),
-            )
-            con.commit()
-
-        session["PasswordHash"] = new_password_hash
-        log_audit("CHANGE_PASSWORD", "User changed their own password.")
-
-        flash("Password changed successfully.")
-        return redirect(url_for("home"))
-
-    return render_template("changepassword.html")
-
-
-# --------------------------
 # Reset Employee Password (Admin only)
 # --------------------------
 @app.route("/resetpassword/<int:user_id>", methods=["GET", "POST"])
@@ -686,7 +455,7 @@ def auditlog():
             SELECT AuditLogID, UserID, Action, Details, CreatedAt
             FROM AuditLog
             ORDER BY CreatedAt DESC, AuditLogID DESC
-            LIMIT 100
+                LIMIT 100
             """
         )
         rows = cur.fetchall()
