@@ -246,28 +246,35 @@ def login():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
 
-        enc_name = enc(username)
+        matching_user = None
 
         with get_db() as con:
             con.row_factory = sql.Row
             cur = con.cursor()
-            cur.execute(
-                "SELECT * FROM Employee WHERE Name=?",
-                (enc_name,),
-            )
-            row = cur.fetchone()
+            cur.execute("SELECT * FROM Employee")
+            rows = cur.fetchall()
+
+        for row in rows:
+            try:
+                decrypted_name = dec(row["Name"])
+            except Exception:
+                continue
+
+            if decrypted_name == username:
+                matching_user = row
+                break
 
         if (
-                row
-                and row["IsActive"] == 1
-                and check_password_hash(row["PasswordHash"], password)
+                matching_user
+                and matching_user["IsActive"] == 1
+                and check_password_hash(matching_user["PasswordHash"], password)
         ):
             # Store the logged-in user's ID, display name, and security level.
             session.clear()
-            session["UserID"] = row["UserID"]
-            session["name"] = dec(row["Name"])
-            session["SecurityLevel"] = int(row["SecurityLevel"])
-            session["PasswordHash"] = row["PasswordHash"]
+            session["UserID"] = matching_user["UserID"]
+            session["name"] = dec(matching_user["Name"])
+            session["SecurityLevel"] = int(matching_user["SecurityLevel"])
+            session["PasswordHash"] = matching_user["PasswordHash"]
 
             flash("Login successful.")
             return redirect(url_for("home"))
