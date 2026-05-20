@@ -72,6 +72,7 @@ The end goal is a secure, usable **local employee database** that runs on a sing
 - Restore a database backup from the `backups/` folder
 - Create a safety backup before restoring over the current database
 - Record selected sensitive actions in the `AuditLog` table
+- Start local setup and app launch with Windows batch scripts
 
 ## Security Features Still To Be Implemented
 
@@ -85,10 +86,45 @@ The end goal is a secure, usable **local employee database** that runs on a sing
 
 ### Prerequisites
 
+- Windows
 - Python 3.8+
+- Python launcher for Windows (`py`)
 - pip
 
-### Setup
+### Easy Local Setup
+
+Run:
+
+```bash
+setup.bat
+```
+
+This script will:
+
+- Create a local virtual environment if one does not already exist
+- Install Python dependencies from `requirements.txt`
+- Create `.env` from `.env.example` if `.env` does not already exist
+- Initialize the SQLite database tables without deleting existing data
+
+Start the app:
+
+```bash
+run.bat
+```
+
+This script will:
+
+- Activate the local virtual environment
+- Open the app in the browser
+- Start the Flask development server
+
+Open manually if needed:
+
+```text
+http://127.0.0.1:5000
+```
+
+### Manual Setup
 
 Create and activate a virtual environment:
 
@@ -263,6 +299,8 @@ flask-employee-manager/
 ├── backup_db.py
 ├── restore_db.py
 ├── setup.py
+├── setup.bat
+├── run.bat
 ├── Encryption.py
 ├── ProcessPayRaiseDeletionsServer.py
 ├── AddAPayRaiseServer.py
