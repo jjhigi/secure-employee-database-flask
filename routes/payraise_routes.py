@@ -23,6 +23,7 @@ from db import get_db
 from crypto_helpers import dec, enc
 from routes.auth_routes import require_login
 import Encryption
+from validation_constants import MAX_RAISE_AMOUNT
 
 payraise_bp = Blueprint("payraise", __name__)
 
@@ -33,12 +34,6 @@ HMAC_TAG_LEN = 64
 HMAC_SEPARATOR = "^%$"
 HMAC_HOST = "localhost"
 HMAC_PORT = 8888
-
-# --------------------------
-# Validation Constants
-# --------------------------
-MAX_RAISE_AMOUNT = 1000000.00
-
 
 # --------------------------
 # List Pay Raises (Level 2)
