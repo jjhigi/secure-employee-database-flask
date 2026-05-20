@@ -24,6 +24,7 @@ from crypto_helpers import dec, enc
 from routes.auth_routes import require_login
 import Encryption
 from validation_constants import MAX_RAISE_AMOUNT
+from audit import log_audit
 
 payraise_bp = Blueprint("payraise", __name__)
 
@@ -304,6 +305,11 @@ def submitdeletepayraise():
             sock.connect((host, port))
             sock.sendall(encrypted_text.encode("utf-8"))
             sock.close()
+
+            log_audit(
+                "VOID_PAY_RAISE",
+                f"Requested void for pay raise belonging to EmpID {emp_id} on {date}.",
+            )
 
             return render_template(
                 "result.html",

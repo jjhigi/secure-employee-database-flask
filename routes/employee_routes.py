@@ -50,6 +50,7 @@ def get_security_level_label(security_level):
     """Return a user-friendly label for a security level number."""
     return SECURITY_LEVEL_LABELS.get(security_level, "Unknown")
 
+
 # --------------------------
 # Add Employee (Admin only)
 # --------------------------
@@ -453,9 +454,9 @@ def auditlog():
         params.append(f"%{search}%")
 
     query = """
-        SELECT AuditLogID, UserID, Action, Details, CreatedAt
-        FROM AuditLog
-    """
+            SELECT AuditLogID, UserID, Action, Details, CreatedAt
+            FROM AuditLog \
+            """
 
     if where_clauses:
         query += " WHERE " + " AND ".join(where_clauses)
