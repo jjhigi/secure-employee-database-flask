@@ -6,3 +6,4 @@ venv/
 EmployeeDB.db
 .env
 backups/
+PROJECT_NOTES.md
