@@ -77,7 +77,7 @@ The end goal is a secure, usable **local employee database** that runs on a sing
 ## Security Features Still To Be Implemented
 
 - Improve long-term AES key management and rotation
-- Add more complete input validation and field length limits
+- Continue improving input validation and user feedback
 - Improve error handling and user feedback
 - Add deployment documentation for any future non-local use
 - Replace the Flask development server with a production WSGI server if the project is ever adapted beyond local-only use
@@ -269,6 +269,7 @@ Browser  -->  Flask App  -->  encrypted + HMAC socket message
 - `AuditLog` records selected sensitive actions such as password changes, password resets, and employee activation changes.
 - Socket servers demonstrate encrypted client/server communication.
 - HMAC validation helps verify that add-pay-raise messages were not tampered with.
+- Routes are organized into Flask Blueprints for authentication/setup, employee/admin actions, and pay raise actions.
 
 ## Application Routes
 
@@ -310,6 +311,14 @@ flask-employee-manager/
 ├── Encryption.py
 ├── ProcessPayRaiseDeletionsServer.py
 ├── AddAPayRaiseServer.py
+├── auth_helpers.py
+├── crypto_helpers.py
+├── validation_constants.py
+├── routes/
+│   ├── __init__.py
+│   ├── auth_routes.py
+│   ├── employee_routes.py
+│   └── payraise_routes.py
 ├── requirements.txt
 ├── README.md
 ├── .gitignore
