@@ -1,8 +1,8 @@
 """
 Authentication and Setup Routes
 
-Contains routes for first-admin setup, login, logout, home, and changing the
-logged-in user's password.
+Contains routes for first-admin setup, login, logout, home, session validation,
+and changing the logged-in user's password.
 """
 
 import sqlite3 as sql
@@ -23,16 +23,16 @@ from crypto_helpers import dec, enc
 from db import get_db
 from validation_constants import (
     MAX_NAME_LENGTH,
+    MAX_PASSWORD_LENGTH,
     MAX_PHONE_LENGTH,
     MIN_PASSWORD_LENGTH,
-    MAX_PASSWORD_LENGTH,
 )
 
 auth_bp = Blueprint("auth", __name__)
 
 
 # --------------------------
-# Helpers
+# Session / Account Helpers
 # --------------------------
 def employee_count():
     """Return the number of employee records in the database."""
@@ -43,7 +43,12 @@ def employee_count():
 
 
 def require_login():
-    """If the user is not logged in, send them to the login page."""
+    """
+    Require a valid logged-in session.
+
+    The session is checked against the current database record so inactive
+    accounts, deleted accounts, and stale password-hash sessions are cleared.
+    """
     if "UserID" not in session:
         return render_template("login.html")
 
@@ -77,10 +82,11 @@ def require_login():
 
 
 # --------------------------
-# Home / First Admin Setup / Authentication
+# Home
 # --------------------------
 @auth_bp.route("/")
 def home():
+    """Show the home page or redirect to first-admin setup when the database is empty."""
     if employee_count() == 0:
         session.clear()
         return redirect(url_for("auth.setup_admin"))
@@ -92,9 +98,12 @@ def home():
     return render_template("home.html", name=session.get("name"))
 
 
+# --------------------------
+# First Admin Setup
+# --------------------------
 @auth_bp.route("/setup-admin", methods=["GET", "POST"])
 def setup_admin():
-    """Create the first admin account if the Employee table is empty."""
+    """Create the first admin account when the Employee table is empty."""
     if employee_count() > 0:
         return render_template(
             "result.html",
@@ -167,9 +176,17 @@ def setup_admin():
     return render_template("setup_admin.html")
 
 
+# --------------------------
+# Login / Logout
+# --------------------------
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
-    """Log in a user by matching username and verifying the password hash."""
+    """
+    Log in an active employee by matching the decrypted name and password hash.
+
+    Employee names are encrypted at rest, so login checks each decrypted name
+    until it finds a matching username.
+    """
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")

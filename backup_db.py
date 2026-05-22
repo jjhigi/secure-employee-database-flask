@@ -13,8 +13,8 @@ DB_NAME = "EmployeeDB.db"
 BACKUP_DIR = "backups"
 
 
-def backup_database():
-    """Create a timestamped backup of the SQLite database file."""
+def backup_database() -> None:
+    """Create a timestamped backup of the local SQLite database file."""
     db_path = Path(DB_NAME)
 
     if not db_path.exists():

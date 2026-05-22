@@ -20,8 +20,11 @@ if exist .venv (
 )
 
 echo.
-echo Installing requirements...
+echo Activating virtual environment...
 call .venv\Scripts\activate
+
+echo.
+echo Installing requirements...
 python -m pip install -r requirements.txt
 
 if errorlevel 1 (
@@ -60,9 +63,10 @@ if errorlevel 1 (
 echo.
 echo Setup complete.
 echo.
-echo Next steps:
-echo 1. Run run.bat
-echo 2. Open http://127.0.0.1:5000
-echo 3. If the database is empty, go to /setup-admin
+echo Next step:
+echo Run run.bat to start the app.
+echo.
+echo If this is your first launch, the app will open the initial admin setup page.
+echo Keep the run.bat terminal window open while using the app.
 echo.
 pause

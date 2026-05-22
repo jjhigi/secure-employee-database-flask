@@ -19,13 +19,12 @@ BACKUP_DIR = "backups"
 
 
 def is_valid_sqlite_database(db_path: Path) -> bool:
-    """Return True if the file can be opened as a valid SQLite database."""
+    """Return True if db_path can be opened as a valid SQLite database."""
     try:
-        conn = sqlite3.connect(db_path)
-        cur = conn.cursor()
-        cur.execute("PRAGMA quick_check")
-        result = cur.fetchone()
-        conn.close()
+        with sqlite3.connect(db_path) as conn:
+            cur = conn.cursor()
+            cur.execute("PRAGMA quick_check")
+            result = cur.fetchone()
 
         return result is not None and result[0] == "ok"
     except sqlite3.Error:
@@ -33,13 +32,12 @@ def is_valid_sqlite_database(db_path: Path) -> bool:
 
 
 def get_backup_path(backup_name: str) -> Path:
-    """Get a safe backup path inside the backups folder."""
-    backup_dir = Path(BACKUP_DIR).resolve()
+    """
+    Return a safe backup path inside the backups folder.
 
-    # Allow either:
-    #   python restore_db.py EmployeeDB_2026-05-17_12-00-00.db
-    # or:
-    #   python restore_db.py backups/EmployeeDB_2026-05-17_12-00-00.db
+    Accepts either a plain backup filename or a path inside backups/.
+    """
+    backup_dir = Path(BACKUP_DIR).resolve()
     requested_path = Path(backup_name)
 
     if requested_path.parent == Path("."):
@@ -47,7 +45,6 @@ def get_backup_path(backup_name: str) -> Path:
     else:
         backup_path = requested_path.resolve()
 
-    # Make sure the final path is still inside backups/
     try:
         backup_path.relative_to(backup_dir)
     except ValueError:
@@ -56,7 +53,7 @@ def get_backup_path(backup_name: str) -> Path:
     return backup_path
 
 
-def restore_database(backup_name: str):
+def restore_database(backup_name: str) -> None:
     """Restore EmployeeDB.db from a selected backup file."""
     db_path = Path(DB_NAME)
     backup_dir = Path(BACKUP_DIR)
@@ -112,11 +109,11 @@ if __name__ == "__main__":
         print("Usage:")
         print("  python restore_db.py <backup-file-name>")
         print()
-        print("Example:")
+        print("Examples:")
         print("  python restore_db.py EmployeeDB_2026-05-17_12-00-00.db")
         print("  python restore_db.py backups/EmployeeDB_2026-05-17_12-00-00.db")
     else:
         try:
             restore_database(sys.argv[1])
-        except ValueError as e:
-            print(e)
+        except ValueError as error:
+            print(error)

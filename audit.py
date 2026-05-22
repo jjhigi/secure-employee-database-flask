@@ -12,8 +12,8 @@ from flask import session
 from db import get_db
 
 
-def log_audit(action: str, details: str = ""):
-    """Write a sensitive action to the local audit log."""
+def log_audit(action: str, details: str = "") -> None:
+    """Write an audit log entry for the current session user."""
     user_id = session.get("UserID")
 
     with get_db() as con:

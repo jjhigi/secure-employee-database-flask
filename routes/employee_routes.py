@@ -1,8 +1,8 @@
 """
 Employee and Admin Routes
 
-Contains routes for employee management, password resets, account activation,
-and viewing the audit log.
+Contains routes for employee management, password resets, account status changes,
+and audit log viewing/filtering.
 """
 
 import sqlite3 as sql
@@ -19,13 +19,13 @@ from werkzeug.security import generate_password_hash
 
 from audit import log_audit
 from auth_helpers import require_level
-from db import get_db
 from crypto_helpers import dec, enc
+from db import get_db
 from validation_constants import (
     MAX_NAME_LENGTH,
+    MAX_PASSWORD_LENGTH,
     MAX_PHONE_LENGTH,
     MIN_PASSWORD_LENGTH,
-    MAX_PASSWORD_LENGTH,
 )
 
 employee_bp = Blueprint("employee", __name__)
@@ -47,15 +47,16 @@ SECURITY_LEVEL_OPTIONS = [
 
 
 def get_security_level_label(security_level):
-    """Return a user-friendly label for a security level number."""
+    """Return a readable label for a numeric security level."""
     return SECURITY_LEVEL_LABELS.get(security_level, "Unknown")
 
 
 # --------------------------
-# Add Employee (Admin only)
+# Add Employee
 # --------------------------
 @employee_bp.route("/addemployee")
 def addemployee():
+    """Show the add employee form. Admin only."""
     guard = require_level({1})
     if guard:
         return guard
@@ -68,7 +69,7 @@ def addemployee():
 
 @employee_bp.route("/addrec", methods=["POST"])
 def addrec():
-    """Insert a new employee with encrypted fields and a hashed password."""
+    """Create an employee with encrypted fields and a hashed password. Admin only."""
     guard = require_level({1})
     if guard:
         return guard
@@ -128,16 +129,17 @@ def addrec():
 
 
 # --------------------------
-# List Employees (Level 1 or 2)
+# List Employees
 # --------------------------
 @employee_bp.route("/listemployees")
 def listemployees():
-    """List employees, with optional search by name, user ID, security level, or status."""
+    """List employees with optional search. Level 1 or 2 only."""
     guard = require_level({1, 2})
     if guard:
         return guard
 
     search = request.args.get("search", "").strip()
+    search_lower = search.lower()
 
     with get_db() as con:
         con.row_factory = sql.Row
@@ -159,36 +161,35 @@ def listemployees():
             "Status": "Active" if r["IsActive"] == 1 else "Inactive",
         }
 
-        if search:
-            search_lower = search.lower()
+        if not search:
+            decrypted.append(employee)
+            continue
 
-            matches_name = search_lower in employee["Name"].lower()
-            matches_user_id = search_lower in str(employee["UserID"]).lower()
-            matches_security_level = (
-                    search_lower in str(employee["SecurityLevel"]).lower()
-                    or search_lower in employee["SecurityLevelLabel"].lower()
-            )
-            matches_status = search_lower in employee["Status"].lower()
+        matches_name = search_lower in employee["Name"].lower()
+        matches_user_id = search_lower in str(employee["UserID"]).lower()
+        matches_security_level = (
+                search_lower in str(employee["SecurityLevel"]).lower()
+                or search_lower in employee["SecurityLevelLabel"].lower()
+        )
+        matches_status = search_lower in employee["Status"].lower()
 
-            if (
-                    matches_name
-                    or matches_user_id
-                    or matches_security_level
-                    or matches_status
-            ):
-                decrypted.append(employee)
-        else:
+        if (
+                matches_name
+                or matches_user_id
+                or matches_security_level
+                or matches_status
+        ):
             decrypted.append(employee)
 
     return render_template("listemployees.html", rows=decrypted, search=search)
 
 
 # --------------------------
-# Edit Employee (Admin only)
+# Edit Employee
 # --------------------------
 @employee_bp.route("/editemployee/<int:user_id>", methods=["GET", "POST"])
 def editemployee(user_id):
-    """Edit an existing employee record. Admin only."""
+    """Edit an employee record. Admin only."""
     guard = require_level({1})
     if guard:
         return guard
@@ -230,7 +231,9 @@ def editemployee(user_id):
                 )
 
             if not security_level.isdigit() or not (1 <= int(security_level) <= 3):
-                errors.append("Security level must be 1-3.")
+                errors.append(
+                    "Security level must be 1 (Admin), 2 (Manager), or 3 (Employee)."
+                )
 
             if errors:
                 return render_template("result.html", msg=", ".join(errors))
@@ -288,7 +291,7 @@ def editemployee(user_id):
 
 
 # --------------------------
-# Reset Employee Password (Admin only)
+# Reset Employee Password
 # --------------------------
 @employee_bp.route("/resetpassword/<int:user_id>", methods=["GET", "POST"])
 def resetpassword(user_id):
@@ -354,11 +357,11 @@ def resetpassword(user_id):
 
 
 # --------------------------
-# Deactivate Employee (Admin only)
+# Deactivate Employee
 # --------------------------
 @employee_bp.route("/deactivateemployee/<int:user_id>", methods=["POST"])
 def deactivateemployee(user_id):
-    """Mark an employee as inactive. Admin only."""
+    """Mark an employee account as inactive. Admin only."""
     guard = require_level({1})
     if guard:
         return guard
@@ -380,11 +383,11 @@ def deactivateemployee(user_id):
 
 
 # --------------------------
-# Reactivate Employee (Admin only)
+# Reactivate Employee
 # --------------------------
 @employee_bp.route("/reactivateemployee/<int:user_id>", methods=["POST"])
 def reactivateemployee(user_id):
-    """Mark an employee as active again. Admin only."""
+    """Reactivate an inactive employee account. Admin only."""
     guard = require_level({1})
     if guard:
         return guard
@@ -403,7 +406,7 @@ def reactivateemployee(user_id):
 
 
 # --------------------------
-# Audit Log Viewer (Admin only)
+# Audit Log
 # --------------------------
 @employee_bp.route("/auditlog")
 def auditlog():

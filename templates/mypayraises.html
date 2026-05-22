@@ -1,19 +1,21 @@
 {% extends "base.html" %}
 
+{% block title %}My Pay Raises{% endblock %}
+
 {% block content %}
 <h2>My Pay Raises</h2>
 
 {% if rows %}
-<table border="1">
+<table>
     <tr>
-        <td>Pay Raise Date</td>
-        <td>Raise Amount</td>
+        <th>Pay Raise Date</th>
+        <th>Raise Amount</th>
     </tr>
 
     {% for row in rows %}
     <tr>
         <td>{{ row["PayRaiseDate"] }}</td>
-        <td>{{ row["RaiseAmt"] }}</td>
+        <td>{{ "%.2f"|format(row["RaiseAmt"]) }}</td>
     </tr>
     {% endfor %}
 </table>

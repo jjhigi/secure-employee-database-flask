@@ -3,63 +3,63 @@
 {% block title %}Audit Log{% endblock %}
 
 {% block content %}
-<h1>Audit Log</h1>
+<h2>Audit Log</h2>
 
 <p>Recent sensitive account actions are shown below.</p>
 
-<form class="search-form" method="GET" action="{{ url_for('employee.auditlog') }}">
-    <label for="action">Action</label><br>
+<form method="get" action="{{ url_for('employee.auditlog') }}" class="search-form">
+    <label for="action">Action:</label><br>
     <select id="action" name="action">
         <option value="">All actions</option>
         {% for item in actions %}
-            {% if filters["action"] == item["Action"] %}
-            <option value="{{ item['Action'] }}" selected>{{ item["Action"] }}</option>
-            {% else %}
-            <option value="{{ item['Action'] }}">{{ item["Action"] }}</option>
-            {% endif %}
+        {% if filters["action"] == item["Action"] %}
+        <option value="{{ item['Action'] }}" selected>{{ item["Action"] }}</option>
+        {% else %}
+        <option value="{{ item['Action'] }}">{{ item["Action"] }}</option>
+        {% endif %}
         {% endfor %}
     </select>
 
     <br><br>
 
-    <label for="user_id">User ID</label><br>
+    <label for="user_id">User ID:</label><br>
     <input
-        type="text"
-        id="user_id"
-        name="user_id"
-        value="{{ filters['user_id'] }}"
-        placeholder="Example: 1"
+            type="text"
+            id="user_id"
+            name="user_id"
+            value="{{ filters['user_id'] }}"
+            placeholder="Example: 1"
     >
 
     <br><br>
 
-    <label for="start_date">Start Date</label><br>
+    <label for="start_date">Start Date:</label><br>
     <input
-        type="date"
-        id="start_date"
-        name="start_date"
-        value="{{ filters['start_date'] }}"
+            type="date"
+            id="start_date"
+            name="start_date"
+            value="{{ filters['start_date'] }}"
     >
 
     <br><br>
 
-    <label for="end_date">End Date</label><br>
+    <label for="end_date">End Date:</label><br>
     <input
-        type="date"
-        id="end_date"
-        name="end_date"
-        value="{{ filters['end_date'] }}"
+            type="date"
+            id="end_date"
+            name="end_date"
+            value="{{ filters['end_date'] }}"
     >
 
     <br><br>
 
-    <label for="search">Details Search</label><br>
+    <label for="search">Details Search:</label><br>
     <input
-        type="text"
-        id="search"
-        name="search"
-        value="{{ filters['search'] }}"
-        placeholder="Search details"
+            type="text"
+            id="search"
+            name="search"
+            value="{{ filters['search'] }}"
+            placeholder="Search details"
     >
 
     <br><br>

@@ -1,8 +1,8 @@
 """
 Pay Raise Routes
 
-Contains routes for viewing, adding, filtering, and socket-submitting pay raise
-records.
+Contains routes for viewing, adding, filtering, voiding, and socket-submitting
+pay raise records.
 """
 
 import hashlib
@@ -17,31 +17,34 @@ from flask import (
     request,
     session,
 )
+
+import Encryption
+from audit import log_audit
 from auth_helpers import require_level
 from config import HMAC_SECRET
-from db import get_db
 from crypto_helpers import dec, enc
+from db import get_db
 from routes.auth_routes import require_login
-import Encryption
 from validation_constants import MAX_RAISE_AMOUNT
-from audit import log_audit
 
 payraise_bp = Blueprint("payraise", __name__)
 
 # --------------------------
 # Socket / HMAC Constants
 # --------------------------
-HMAC_TAG_LEN = 64
 HMAC_SEPARATOR = "^%$"
 HMAC_HOST = "localhost"
 HMAC_PORT = 8888
+
+VOID_HOST = "localhost"
+VOID_PORT = 9999
 
 
 # --------------------------
 # Validation Helpers
 # --------------------------
 def validate_payraise_date(date_text, field_name):
-    """Validate a pay raise date and return a list of errors."""
+    """Validate a pay raise date and return a list of error messages."""
     errors = []
 
     if not date_text:
@@ -66,7 +69,7 @@ def validate_payraise_date(date_text, field_name):
 
 
 def validate_raise_amount(amount_text, field_name):
-    """Validate a raise amount and return a list of errors plus the float value."""
+    """Validate a raise amount and return error messages plus the parsed amount."""
     errors = []
     amount_value = None
 
@@ -76,23 +79,24 @@ def validate_raise_amount(amount_text, field_name):
 
     try:
         amount_value = float(amount_text)
-
-        if amount_value <= 0:
-            errors.append(f"{field_name} must be greater than 0.")
-        elif amount_value > MAX_RAISE_AMOUNT:
-            errors.append(f"{field_name} cannot be more than ${MAX_RAISE_AMOUNT:,.2f}.")
     except ValueError:
         errors.append(f"{field_name} must be a numeric value.")
+        return errors, amount_value
+
+    if amount_value <= 0:
+        errors.append(f"{field_name} must be greater than 0.")
+    elif amount_value > MAX_RAISE_AMOUNT:
+        errors.append(f"{field_name} cannot be more than ${MAX_RAISE_AMOUNT:,.2f}.")
 
     return errors, amount_value
 
 
 # --------------------------
-# List Pay Raises (Level 1 or 2)
+# List Pay Raises
 # --------------------------
 @payraise_bp.route("/listpayraises")
 def listpayraises():
-    """List all pay raises with optional filters."""
+    """List all pay raises with optional filters. Level 1 or 2 only."""
     guard = require_level({1, 2})
     if guard:
         return guard
@@ -164,11 +168,11 @@ def listpayraises():
 
 
 # --------------------------
-# My Pay Raises (current user)
+# My Pay Raises
 # --------------------------
 @payraise_bp.route("/mypayraises")
 def mypayraises():
-    """Show only the pay raises for the currently logged-in user."""
+    """Show active pay raises for the currently logged-in user."""
     guard = require_login()
     if guard:
         return guard
@@ -204,11 +208,11 @@ def mypayraises():
 
 
 # --------------------------
-# Add Pay Raise (for current user)
+# Add Pay Raise
 # --------------------------
 @payraise_bp.route("/addpayraise", methods=["GET", "POST"])
 def addpayraise():
-    """Add a new pay raise for the currently logged-in user."""
+    """Add a pay raise for the currently logged-in user."""
     guard = require_login()
     if guard:
         return guard
@@ -244,15 +248,15 @@ def addpayraise():
 
 
 # --------------------------
-# Submit to Delete a Pay Raise (Level 1 or 2)
+# Submit Pay Raise Void Request
 # --------------------------
 @payraise_bp.route("/submitdeletepayraise", methods=["GET", "POST"])
 def submitdeletepayraise():
     """
-    Submit a request to void a pay raise.
+    Submit an encrypted request to void an active pay raise.
 
-    Validates that the EmpID and PayRaiseDate exist in the EmpPayRaise table.
-    If valid, sends an encrypted message to the local pay raise deletion server.
+    The route keeps the original URL for compatibility, but the current behavior
+    is voiding the record instead of permanently deleting it.
     """
     guard = require_level({1, 2})
     if guard:
@@ -298,11 +302,9 @@ def submitdeletepayraise():
         plain_msg = f"{emp_id}{HMAC_SEPARATOR}{date}"
         encrypted_text = enc(plain_msg)
 
-        host, port = "localhost", 9999
-
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect((host, port))
+            sock.connect((VOID_HOST, VOID_PORT))
             sock.sendall(encrypted_text.encode("utf-8"))
             sock.close()
 
@@ -325,16 +327,15 @@ def submitdeletepayraise():
 
 
 # --------------------------
-# Send Authenticated Add Pay Raise Message (HMAC + Encryption)
+# Send HMAC Add Pay Raise Message
 # --------------------------
 @payraise_bp.route("/sendaddpayraisehmac", methods=["GET", "POST"])
 def sendaddpayraisehmac():
     """
-    Send an authenticated encrypted message to add a pay raise.
+    Send an encrypted, HMAC-authenticated request to add a pay raise.
 
-    Validates EmpID, PayRaiseDate, and RaiseAmt. If valid, builds a separated
-    plaintext message, encrypts it, signs the plaintext with HMAC-SHA3-512,
-    and sends ciphertext + tag to the local add-pay-raise socket server.
+    The message body is encrypted before sending, and the plaintext body is
+    signed with HMAC-SHA3-512 so the receiver can detect tampering.
     """
     guard = require_login()
     if guard:
@@ -368,7 +369,7 @@ def sendaddpayraisehmac():
 
         errors.extend(validate_payraise_date(payraise_date, "PayRaiseDate"))
 
-        amount_errors, amount_value = validate_raise_amount(raise_amt, "RaiseAmt")
+        amount_errors, _ = validate_raise_amount(raise_amt, "RaiseAmt")
         errors.extend(amount_errors)
 
         if errors:
@@ -376,7 +377,6 @@ def sendaddpayraisehmac():
 
         body_text = f"{emp_id}{HMAC_SEPARATOR}{payraise_date}{HMAC_SEPARATOR}{raise_amt}"
         body_bytes = body_text.encode("utf-8")
-
         body_encrypted = Encryption.cipher.encrypt(body_bytes)
 
         tag = hmac.new(
@@ -395,12 +395,12 @@ def sendaddpayraisehmac():
 
             return render_template(
                 "result.html",
-                msg="Message to create a pay raise successfully sent",
+                msg="Message to create a pay raise successfully sent.",
             )
         except OSError:
             return render_template(
                 "result.html",
-                msg="Error - Message to create a pay raise NOT sent",
+                msg="Error - message to create a pay raise NOT sent.",
             )
 
     return render_template("sendaddpayraisehmac.html")

@@ -1,19 +1,27 @@
 """
 Setup Compatibility Script
 
-This script resets and rebuilds the demo database by running reset_demo_db.py.
+Runs reset_demo_db.py to reset and rebuild the local demo database.
 
-For safer setup that does not delete existing data, use:
+Warning: This script deletes existing Employee, EmpPayRaise, and AuditLog data.
+For safe setup that does not delete records, use:
     python init_db.py
 
-To add demo data after initialization, use:
+To add demo data after safe initialization, use:
     python seed_demo.py
 """
 
 import reset_demo_db
 
-if __name__ == "__main__":
+
+def main() -> None:
+    """Run the backward-compatible demo database reset command."""
     print("Warning: setup.py resets the demo database and deletes existing records.")
-    print("For safer setup, run init_db.py instead.")
+    print("For safe setup without deleting records, run init_db.py instead.")
     print()
+
     reset_demo_db.reset_demo_database()
+
+
+if __name__ == "__main__":
+    main()

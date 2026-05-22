@@ -36,7 +36,8 @@ nav a {
     font-weight: bold;
 }
 
-nav a:hover {
+nav a:hover,
+nav a:focus {
     text-decoration: underline;
 }
 
@@ -82,14 +83,15 @@ input[type="submit"] {
     cursor: pointer;
 }
 
-input[type="submit"]:hover {
+input[type="submit"]:hover,
+input[type="submit"]:focus {
     background-color: #374151;
 }
 
 table {
-    border-collapse: collapse;
     width: 100%;
     margin-top: 15px;
+    border-collapse: collapse;
 }
 
 td,
@@ -104,11 +106,27 @@ tr:first-child {
     font-weight: bold;
 }
 
+td a {
+    margin-right: 8px;
+    color: #1f2937;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+td a:visited {
+    color: #1f2937;
+}
+
+td a:hover,
+td a:focus {
+    text-decoration: underline;
+}
+
 .message {
     padding: 12px;
+    margin-top: 15px;
     background-color: #eeeeee;
     border-left: 4px solid #555;
-    margin-top: 15px;
 }
 
 .search-form {
@@ -135,8 +153,4 @@ tr:first-child {
 .inline-form input[type="submit"] {
     padding: 5px 10px;
     font-size: 0.9rem;
-}
-
-td a {
-  margin-right: 8px;
 }

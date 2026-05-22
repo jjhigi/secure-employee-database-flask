@@ -1,32 +1,36 @@
 {% extends "base.html" %}
 
+{% block title %}Employee Records{% endblock %}
+
 {% block content %}
+{% set security_level = session.get("SecurityLevel") %}
+
 <h2>Employee Records</h2>
 
-<form method="get" action="/listemployees" class="search-form">
+<form method="get" action="{{ url_for('employee.listemployees') }}" class="search-form">
     <label for="search">Search employees:</label><br>
     <input
             type="text"
             id="search"
             name="search"
             value="{{ search }}"
-            placeholder="Search by name, user ID, security level, or status"
+            placeholder="Search by name, user ID, role, security level, or status"
     >
     <input type="submit" value="Search">
-    <a href="/listemployees">Clear</a>
+    <a href="{{ url_for('employee.listemployees') }}">Clear</a>
 </form>
 
 {% if rows %}
-<table border="1">
+<table>
     <tr>
-        <td>User ID</td>
-        <td>Name</td>
-        <td>Age</td>
-        <td>Phone Number</td>
-        <td>Role</td>
-        <td>Status</td>
-        {% if session.get("SecurityLevel") == 1 %}
-        <td>Actions</td>
+        <th>User ID</th>
+        <th>Name</th>
+        <th>Age</th>
+        <th>Phone Number</th>
+        <th>Role</th>
+        <th>Status</th>
+        {% if security_level == 1 %}
+        <th>Actions</th>
         {% endif %}
     </tr>
 
@@ -39,18 +43,26 @@
         <td>{{ row["SecurityLevelLabel"] }} ({{ row["SecurityLevel"] }})</td>
         <td>{{ row["Status"] }}</td>
 
-        {% if session.get("SecurityLevel") == 1 %}
+        {% if security_level == 1 %}
         <td>
-            <a href="/editemployee/{{ row['UserID'] }}">Edit</a>
-            <a href="/resetpassword/{{ row['UserID'] }}">Reset Password</a>
+            <a href="{{ url_for('employee.editemployee', user_id=row['UserID']) }}">Edit</a>
+            <a href="{{ url_for('employee.resetpassword', user_id=row['UserID']) }}">Reset Password</a>
 
             {% if row["IsActive"] == 1 %}
-            <form method="post" action="/deactivateemployee/{{ row['UserID'] }}" class="inline-form">
+            <form
+                    method="post"
+                    action="{{ url_for('employee.deactivateemployee', user_id=row['UserID']) }}"
+                    class="inline-form"
+            >
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="submit" value="Deactivate">
             </form>
             {% else %}
-            <form method="post" action="/reactivateemployee/{{ row['UserID'] }}" class="inline-form">
+            <form
+                    method="post"
+                    action="{{ url_for('employee.reactivateemployee', user_id=row['UserID']) }}"
+                    class="inline-form"
+            >
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="submit" value="Reactivate">
             </form>
