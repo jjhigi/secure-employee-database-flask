@@ -1,9 +1,11 @@
 {% extends "base.html" %}
 
+{% block title %}Pay Raise Records{% endblock %}
+
 {% block content %}
 <h2>Pay Raise Records</h2>
 
-<form method="get" action="/listpayraises" class="filter-form">
+<form method="get" action="{{ url_for('payraise.listpayraises') }}" class="search-form">
     <label for="emp_id">Employee ID:</label><br>
     <input
             type="text"
@@ -39,17 +41,17 @@
     ><br><br>
 
     <input type="submit" value="Filter">
-    <a href="/listpayraises">Clear</a>
+    <a href="{{ url_for('payraise.listpayraises') }}">Clear</a>
 </form>
 
 {% if rows %}
-<table border="1">
+<table>
     <tr>
-        <td>Pay Raise ID</td>
-        <td>Employee ID</td>
-        <td>Pay Raise Date</td>
-        <td>Raise Amount</td>
-        <td>Status</td>
+        <th>Pay Raise ID</th>
+        <th>Employee ID</th>
+        <th>Pay Raise Date</th>
+        <th>Raise Amount</th>
+        <th>Status</th>
     </tr>
 
     {% for row in rows %}
@@ -57,7 +59,7 @@
         <td>{{ row["PayRaiseID"] }}</td>
         <td>{{ row["EmpID"] }}</td>
         <td>{{ row["PayRaiseDate"] }}</td>
-        <td>{{ row["RaiseAmt"] }}</td>
+        <td>{{ "%.2f"|format(row["RaiseAmt"]) }}</td>
         <td>{{ row["Status"] }}</td>
     </tr>
     {% endfor %}

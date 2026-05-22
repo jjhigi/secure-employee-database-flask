@@ -3,40 +3,33 @@
 {% block title %}Initial Admin Setup{% endblock %}
 
 {% block content %}
-<h1>Initial Admin Setup</h1>
+<h2>Initial Admin Setup</h2>
 
 <p>Create the first administrator account for this local database.</p>
 
 <form method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-    <p>
-        <label>Name:</label>
-        <input type="text" name="Name" required>
-    </p>
+    <label for="Name">Name:</label><br>
+    <input type="text" id="Name" name="Name" required><br><br>
 
-    <p>
-        <label>Age:</label>
-        <input type="number" name="Age" min="1" max="120" required>
-    </p>
+    <label for="Age">Age:</label><br>
+    <input type="number" id="Age" name="Age" min="1" max="120" required><br><br>
 
-    <p>
-        <label>Phone Number:</label>
-        <input type="text" name="PhNum" required>
-    </p>
+    <label for="PhNum">Phone Number:</label><br>
+    <input type="text" id="PhNum" name="PhNum" required><br><br>
 
-    <p>
-        <label>Password:</label>
-        <input type="password" name="Password" required>
-    </p>
+    <label for="Password">Password:</label><br>
+    <input type="password" id="Password" name="Password" required><br><br>
 
-    <p>
-        <label>Confirm Password:</label>
-        <input type="password" name="ConfirmPassword" required>
-    </p>
+    <label for="ConfirmPassword">Confirm Password:</label><br>
+    <input
+            type="password"
+            id="ConfirmPassword"
+            name="ConfirmPassword"
+            required
+    ><br><br>
 
-    <p>
-        <button type="submit">Create First Admin</button>
-    </p>
+    <input type="submit" value="Create First Admin">
 </form>
 {% endblock %}

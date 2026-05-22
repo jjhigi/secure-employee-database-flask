@@ -1,27 +1,33 @@
 {% extends "base.html" %}
 
+{% block title %}Edit Employee{% endblock %}
+
 {% block content %}
 <h2>Edit Employee</h2>
 
-<form method="post" action="/editemployee/{{ employee['UserID'] }}">
+<form
+        method="post"
+        action="{{ url_for('employee.editemployee', user_id=employee['UserID']) }}"
+>
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <label>Name:</label><br>
-    <input type="text" name="Name" value="{{ employee['Name'] }}"><br><br>
 
-    <label>Age:</label><br>
-    <input type="text" name="Age" value="{{ employee['Age'] }}"><br><br>
+    <label for="Name">Name:</label><br>
+    <input type="text" id="Name" name="Name" value="{{ employee['Name'] }}"><br><br>
 
-    <label>Phone Number:</label><br>
-    <input type="tel" name="PhNum" value="{{ employee['PhNum'] }}"><br><br>
+    <label for="Age">Age:</label><br>
+    <input type="text" id="Age" name="Age" value="{{ employee['Age'] }}"><br><br>
+
+    <label for="PhNum">Phone Number:</label><br>
+    <input type="tel" id="PhNum" name="PhNum" value="{{ employee['PhNum'] }}"><br><br>
 
     <label for="SecurityLevel">Security Level:</label><br>
     <select id="SecurityLevel" name="SecurityLevel">
         {% for option in security_level_options %}
-            {% if employee["SecurityLevel"] == option["value"] %}
-            <option value="{{ option['value'] }}" selected>{{ option["label"] }}</option>
-            {% else %}
-            <option value="{{ option['value'] }}">{{ option["label"] }}</option>
-            {% endif %}
+        {% if employee["SecurityLevel"] == option["value"] %}
+        <option value="{{ option['value'] }}" selected>{{ option["label"] }}</option>
+        {% else %}
+        <option value="{{ option['value'] }}">{{ option["label"] }}</option>
+        {% endif %}
         {% endfor %}
     </select><br><br>
 

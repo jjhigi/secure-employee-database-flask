@@ -1,17 +1,13 @@
 """
 Flask Employee Manager
 
-Main Flask application setup.
-
 Creates the Flask app, configures session cookie security, enables CSRF
 protection, registers route Blueprints, and starts the local development server.
 """
 
-# Flask/third-party imports
 from flask import Flask
 from flask_wtf.csrf import CSRFProtect
 
-# Local imports
 from config import FLASK_DEBUG, FLASK_SECRET_KEY
 from routes.auth_routes import auth_bp
 from routes.employee_routes import employee_bp
@@ -31,8 +27,5 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(employee_bp)
 app.register_blueprint(payraise_bp)
 
-# --------------------------
-# Run
-# --------------------------
 if __name__ == "__main__":
     app.run(debug=FLASK_DEBUG)

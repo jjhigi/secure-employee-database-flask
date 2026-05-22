@@ -18,15 +18,19 @@ if not exist .env (
     exit /b 1
 )
 
+echo Activating virtual environment...
 call .venv\Scripts\activate
-
-echo Opening app in browser...
-start http://127.0.0.1:5000
 
 echo.
 echo Starting Flask app...
+echo Keep this terminal window open while using the app.
 echo Press Ctrl+C to stop the server.
 echo.
+
+start "" http://127.0.0.1:5000
+
 python app.py
 
+echo.
+echo Flask Employee Manager has stopped.
 pause

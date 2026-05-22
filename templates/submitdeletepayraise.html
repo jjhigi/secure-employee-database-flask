@@ -1,15 +1,18 @@
 {% extends "base.html" %}
 
+{% block title %}Void Pay Raise{% endblock %}
+
 {% block content %}
 <h2>Void Pay Raise</h2>
 
-<form method="post" action="/submitdeletepayraise">
+<form method="post" action="{{ url_for('payraise.submitdeletepayraise') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <label>Employee ID:</label><br>
-    <input type="number" name="EmpID" required><br><br>
 
-    <label>Pay Raise Date:</label><br>
-    <input type="date" name="PayRaiseDate" required><br><br>
+    <label for="EmpID">Employee ID:</label><br>
+    <input type="number" id="EmpID" name="EmpID" required><br><br>
+
+    <label for="PayRaiseDate">Pay Raise Date:</label><br>
+    <input type="date" id="PayRaiseDate" name="PayRaiseDate" required><br><br>
 
     <input type="submit" value="Send Void Request">
 </form>

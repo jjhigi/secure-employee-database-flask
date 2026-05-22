@@ -1,12 +1,15 @@
 {% extends "base.html" %}
 
-{% block content %}
-<h2>Send HMAC-Authenticated Pay Raise Message</h2>
+{% block title %}HMAC Add Pay Raise{% endblock %}
 
-<form method="post" action="/sendaddpayraisehmac">
+{% block content %}
+<h2>HMAC Add Pay Raise</h2>
+
+<form method="post" action="{{ url_for('payraise.sendaddpayraisehmac') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <label for="EmpId">Employee ID:</label><br>
-    <input type="text" id="EmpId" name="EmpID"><br><br>
+
+    <label for="EmpID">Employee ID:</label><br>
+    <input type="text" id="EmpID" name="EmpID"><br><br>
 
     <label for="PayRaiseDate">Pay Raise Date:</label><br>
     <input type="date" id="PayRaiseDate" name="PayRaiseDate"><br><br>
@@ -14,6 +17,6 @@
     <label for="RaiseAmt">Raise Amount:</label><br>
     <input type="text" id="RaiseAmt" name="RaiseAmt"><br><br>
 
-    <input type="submit" value="Submit">
+    <input type="submit" value="Send HMAC Add Request">
 </form>
 {% endblock %}
