@@ -100,7 +100,7 @@ This script will:
 
 - Create a local virtual environment if needed
 - Install dependencies from `requirements.txt`
-- Create `.env` from `.env.example` if needed
+- Create `.env` with generated local secrets if needed
 - Initialize the SQLite database tables without deleting existing data
 
 Then start the app:

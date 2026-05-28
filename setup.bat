@@ -35,18 +35,14 @@ if errorlevel 1 (
 )
 
 echo.
-if not exist .env (
-    echo Creating .env from .env.example...
-    copy .env.example .env
+echo Creating local .env if needed...
+python create_env.py
 
-    if errorlevel 1 (
-        echo.
-        echo Setup failed: .env could not be created.
-        pause
-        exit /b 1
-    )
-) else (
-    echo .env already exists. Keeping existing local configuration.
+if errorlevel 1 (
+    echo.
+    echo Setup failed: .env could not be created.
+    pause
+    exit /b 1
 )
 
 echo.
