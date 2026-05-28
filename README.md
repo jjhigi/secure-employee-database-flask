@@ -139,7 +139,7 @@ Use these steps only if you do not want to use the Windows batch scripts.
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
-copy .env.example .env
+python create_env.py
 python init_db.py
 python app.py
 ```
@@ -294,6 +294,7 @@ The following local files and folders should stay private:
 
 ```text
 .env
+.env.*
 .venv/
 EmployeeDB.db
 backups/
