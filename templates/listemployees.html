@@ -16,8 +16,8 @@
             value="{{ search }}"
             placeholder="Search by name, user ID, role, security level, or status"
     >
-    <input type="submit" value="Search">
-    <a href="{{ url_for('employee.listemployees') }}">Clear</a>
+    <input type="submit" value="Search Employees">
+    <a href="{{ url_for('employee.listemployees') }}">Clear Filters</a>
 </form>
 
 {% if rows %}
