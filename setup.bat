@@ -21,12 +21,8 @@ if exist .venv (
 )
 
 echo.
-echo Activating virtual environment...
-call .venv\Scripts\activate
-
-echo.
 echo Installing requirements...
-python -m pip install -r requirements.txt
+.venv\Scripts\python.exe -m pip install -r requirements.txt
 
 if errorlevel 1 (
     echo.
@@ -37,7 +33,7 @@ if errorlevel 1 (
 
 echo.
 echo Creating local .env if needed...
-python create_env.py
+.venv\Scripts\python.exe create_env.py
 
 if errorlevel 1 (
     echo.
@@ -48,7 +44,7 @@ if errorlevel 1 (
 
 echo.
 echo Initializing database tables...
-python init_db.py
+.venv\Scripts\python.exe init_db.py
 
 if errorlevel 1 (
     echo.
