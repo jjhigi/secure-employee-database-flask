@@ -143,6 +143,12 @@ td a:focus {
     margin-left: 10px;
     color: #1f2937;
     font-weight: bold;
+    text-decoration: none;
+}
+
+.search-form a:hover,
+.search-form a:focus {
+    text-decoration: underline;
 }
 
 .inline-form {
