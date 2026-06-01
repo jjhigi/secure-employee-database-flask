@@ -79,6 +79,7 @@ def addrec():
     phone = request.form.get("PhNum", "").strip()
     security_level = request.form.get("SecurityLevel", "").strip()
     password = request.form.get("Password", "").strip()
+    confirm_password = request.form.get("ConfirmPassword", "").strip()
 
     errors = []
 
@@ -104,6 +105,9 @@ def addrec():
         errors.append(f"Password must be at least {MIN_PASSWORD_LENGTH} characters.")
     elif len(password) > MAX_PASSWORD_LENGTH:
         errors.append(f"Password cannot be longer than {MAX_PASSWORD_LENGTH} characters.")
+
+    if password != confirm_password:
+        errors.append("Passwords do not match.")
 
     if errors:
         return render_template("result.html", msg=", ".join(errors))
