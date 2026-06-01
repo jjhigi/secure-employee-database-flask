@@ -16,13 +16,6 @@ Expected use:
 - The browser UI is used locally
 - The terminal running the Flask server stays open while the app is in use
 
-Not intended use:
-
-- Public web app
-- SaaS application
-- Intranet HR platform
-- Multi-admin enterprise system
-
 ## Authentication
 
 - Users log in with employee credentials.
@@ -112,20 +105,6 @@ AES behavior:
 - Uses a new random IV for each encrypted value
 - Stores encrypted values as base64-encoded `IV + ciphertext`
 
-Using a random IV means identical plaintext values do not produce identical stored ciphertext values.
-
-## Password Hashing vs. Encryption
-
-Passwords are hashed, not encrypted.
-
-This is intentional:
-
-- Passwords do not need to be displayed later
-- Hashing is one-way
-- Admin users can reset passwords but cannot view existing passwords
-
-Fields that must be displayed later, such as employee names and pay raise amounts, are encrypted instead.
-
 ## CSRF Protection
 
 Form submissions are protected with Flask-WTF CSRF protection.
@@ -192,13 +171,6 @@ Audit log filtering uses parameterized SQL.
 ## Pay Raise Voiding
 
 Pay raise records are voided instead of permanently deleted.
-
-This improves:
-
-- Auditability
-- Data history
-- Mistake recovery
-- Record integrity
 
 Voided pay raises:
 
@@ -312,20 +284,6 @@ python setup.py
 ```
 
 This also resets demo data and should not be used for safe setup.
-
-## Current Limitations
-
-This project has important limitations:
-
-- It uses Flask's built-in server for local use
-- It is not configured for public deployment
-- It is not packaged as a native desktop application
-- The terminal window must stay open while the app is running
-- Long-term encryption key rotation is not implemented
-- Backup files are only as secure as the local computer/user account
-- Audit logs are stored locally in the same SQLite database
-- Socket server workflows are demonstration-oriented and require separate terminal processes
-- It should not be used with real employee data without further security review
 
 ## Future Security Improvements
 
