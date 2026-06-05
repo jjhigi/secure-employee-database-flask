@@ -3,3 +3,4 @@ Werkzeug
 pycryptodome
 Flask-WTF
 python-dotenv
+pytest
