@@ -67,4 +67,27 @@
         </td>
     </tr>
 </table>
+
+<h3>Recent Audit Activity</h3>
+
+{% if recent_audit_entries %}
+<table>
+    <tr>
+        <th>Created At</th>
+        <th>User ID</th>
+        <th>Action</th>
+        <th>Details</th>
+    </tr>
+    {% for entry in recent_audit_entries %}
+    <tr>
+        <td>{{ entry["CreatedAt"] }}</td>
+        <td>{{ entry["UserID"] or "" }}</td>
+        <td>{{ entry["Action"] }}</td>
+        <td>{{ entry["Details"] or "" }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>No audit activity found.</p>
+{% endif %}
 {% endblock %}

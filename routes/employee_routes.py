@@ -64,6 +64,7 @@ def dashboard():
         return guard
 
     with get_db() as con:
+        con.row_factory = sql.Row
         cur = con.cursor()
 
         cur.execute("SELECT COUNT(*) FROM Employee")
@@ -92,6 +93,28 @@ def dashboard():
 
         cur.execute("SELECT COUNT(*) FROM EmpPayRaise WHERE IsVoided = 1")
         voided_pay_raises = cur.fetchone()[0]
+
+        cur.execute(
+            """
+            SELECT AuditLogID, UserID, Action, Details, CreatedAt
+            FROM AuditLog
+            ORDER BY CreatedAt DESC, AuditLogID DESC
+            LIMIT 5
+            """
+        )
+        audit_rows = cur.fetchall()
+
+    recent_audit_entries = []
+
+    for row in audit_rows:
+        recent_audit_entries.append(
+            {
+                "CreatedAt": row["CreatedAt"],
+                "UserID": row["UserID"],
+                "Action": row["Action"],
+                "Details": row["Details"],
+            }
+        )
 
     latest_backup_name = None
     latest_backup_timestamp = None
@@ -134,7 +157,11 @@ def dashboard():
         "latest_backup_timestamp": latest_backup_timestamp,
     }
 
-    return render_template("dashboard.html", stats=stats)
+    return render_template(
+        "dashboard.html",
+        stats=stats,
+        recent_audit_entries=recent_audit_entries,
+    )
 
 
 # --------------------------
