@@ -118,11 +118,13 @@ def dashboard():
 
     latest_backup_name = None
     latest_backup_timestamp = None
+    backup_count = 0
 
     backup_dir = Path("backups")
 
     if backup_dir.exists():
         for backup_file in backup_dir.glob("EmployeeDB*.db"):
+            backup_count += 1
             timestamp_text = "_".join(backup_file.stem.split("_")[-2:])
 
             try:
@@ -153,6 +155,7 @@ def dashboard():
         "total_pay_raises": total_pay_raises,
         "active_pay_raises": active_pay_raises,
         "voided_pay_raises": voided_pay_raises,
+        "backup_count": backup_count,
         "latest_backup_name": latest_backup_name,
         "latest_backup_timestamp": latest_backup_timestamp,
     }
