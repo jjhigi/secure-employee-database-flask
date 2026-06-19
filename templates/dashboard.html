@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<h2>Admin Dashboard</h2>
+
+<table>
+    <tr>
+        <th>Metric</th>
+        <th>Value</th>
+    </tr>
+    <tr>
+        <td>Total employees</td>
+        <td>{{ stats["total_employees"] }}</td>
+    </tr>
+    <tr>
+        <td>Active employees</td>
+        <td>{{ stats["active_employees"] }}</td>
+    </tr>
+    <tr>
+        <td>Inactive employees</td>
+        <td>{{ stats["inactive_employees"] }}</td>
+    </tr>
+    <tr>
+        <td>Admins</td>
+        <td>{{ stats["admin_count"] }}</td>
+    </tr>
+    <tr>
+        <td>Managers</td>
+        <td>{{ stats["manager_count"] }}</td>
+    </tr>
+    <tr>
+        <td>Employees</td>
+        <td>{{ stats["employee_count"] }}</td>
+    </tr>
+    <tr>
+        <td>Total pay raises</td>
+        <td>{{ stats["total_pay_raises"] }}</td>
+    </tr>
+    <tr>
+        <td>Active pay raises</td>
+        <td>{{ stats["active_pay_raises"] }}</td>
+    </tr>
+    <tr>
+        <td>Voided pay raises</td>
+        <td>{{ stats["voided_pay_raises"] }}</td>
+    </tr>
+    <tr>
+        <td>Latest backup file</td>
+        <td>
+            {% if stats["latest_backup_name"] %}
+            {{ stats["latest_backup_name"] }}
+            {% else %}
+            No backups found
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <td>Latest backup timestamp</td>
+        <td>
+            {% if stats["latest_backup_timestamp"] %}
+            {{ stats["latest_backup_timestamp"] }}
+            {% else %}
+            No backups found
+            {% endif %}
+        </td>
+    </tr>
+</table>
+{% endblock %}

@@ -21,6 +21,7 @@
         <a href="{{ url_for('payraise.addpayraise') }}">Add Pay Raise</a>
 
         {% if security_level == 1 %}
+        <a href="{{ url_for('employee.dashboard') }}">Dashboard</a>
         <a href="{{ url_for('employee.addemployee') }}">Add Employee</a>
         <a href="{{ url_for('employee.listemployees') }}">List Employees</a>
         <a href="{{ url_for('payraise.listpayraises') }}">List Pay Raises</a>
