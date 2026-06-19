@@ -5,6 +5,8 @@ Contains routes for employee management, password resets, account status changes
 and audit log viewing/filtering.
 """
 
+from datetime import datetime
+from pathlib import Path
 import sqlite3 as sql
 
 from flask import (
@@ -49,6 +51,120 @@ SECURITY_LEVEL_OPTIONS = [
 def get_security_level_label(security_level):
     """Return a readable label for a numeric security level."""
     return SECURITY_LEVEL_LABELS.get(security_level, "Unknown")
+
+
+# --------------------------
+# Admin Dashboard
+# --------------------------
+@employee_bp.route("/dashboard")
+def dashboard():
+    """Show simple admin account totals."""
+    guard = require_level({1})
+    if guard:
+        return guard
+
+    with get_db() as con:
+        con.row_factory = sql.Row
+        cur = con.cursor()
+
+        cur.execute("SELECT COUNT(*) FROM Employee")
+        total_employees = cur.fetchone()[0]
+
+        cur.execute("SELECT COUNT(*) FROM Employee WHERE IsActive = 1")
+        active_employees = cur.fetchone()[0]
+
+        cur.execute("SELECT COUNT(*) FROM Employee WHERE IsActive = 0")
+        inactive_employees = cur.fetchone()[0]
+
+        cur.execute("SELECT COUNT(*) FROM Employee WHERE SecurityLevel = 1")
+        admin_count = cur.fetchone()[0]
+
+        cur.execute("SELECT COUNT(*) FROM Employee WHERE SecurityLevel = 2")
+        manager_count = cur.fetchone()[0]
+
+        cur.execute("SELECT COUNT(*) FROM Employee WHERE SecurityLevel = 3")
+        employee_count = cur.fetchone()[0]
+
+        cur.execute("SELECT COUNT(*) FROM EmpPayRaise")
+        total_pay_raises = cur.fetchone()[0]
+
+        cur.execute("SELECT COUNT(*) FROM EmpPayRaise WHERE IsVoided = 0")
+        active_pay_raises = cur.fetchone()[0]
+
+        cur.execute("SELECT COUNT(*) FROM EmpPayRaise WHERE IsVoided = 1")
+        voided_pay_raises = cur.fetchone()[0]
+
+        cur.execute(
+            """
+            SELECT AuditLogID, UserID, Action, Details, CreatedAt
+            FROM AuditLog
+            ORDER BY CreatedAt DESC, AuditLogID DESC
+            LIMIT 5
+            """
+        )
+        audit_rows = cur.fetchall()
+
+    recent_audit_entries = []
+
+    for row in audit_rows:
+        recent_audit_entries.append(
+            {
+                "CreatedAt": row["CreatedAt"],
+                "UserID": row["UserID"],
+                "Action": row["Action"],
+                "Details": row["Details"],
+            }
+        )
+
+    latest_backup_name = None
+    latest_backup_timestamp = None
+    backup_count = 0
+
+    backup_dir = Path("backups")
+
+    if backup_dir.exists():
+        for backup_file in backup_dir.glob("EmployeeDB*.db"):
+            backup_count += 1
+            timestamp_text = "_".join(backup_file.stem.split("_")[-2:])
+
+            try:
+                backup_timestamp = datetime.strptime(
+                    timestamp_text,
+                    "%Y-%m-%d_%H-%M-%S",
+                )
+            except ValueError:
+                continue
+
+            if latest_backup_timestamp is None:
+                latest_backup_name = backup_file.name
+                latest_backup_timestamp = backup_timestamp
+            elif backup_timestamp > latest_backup_timestamp:
+                latest_backup_name = backup_file.name
+                latest_backup_timestamp = backup_timestamp
+
+    if latest_backup_timestamp is not None:
+        latest_backup_timestamp = latest_backup_timestamp.strftime("%Y-%m-%d %H:%M:%S")
+
+    stats = {
+        "total_employees": total_employees,
+        "active_employees": active_employees,
+        "inactive_employees": inactive_employees,
+        "admin_count": admin_count,
+        "manager_count": manager_count,
+        "employee_count": employee_count,
+        "total_pay_raises": total_pay_raises,
+        "active_pay_raises": active_pay_raises,
+        "voided_pay_raises": voided_pay_raises,
+        "backup_count": backup_count,
+        "latest_backup_name": latest_backup_name,
+        "latest_backup_timestamp": latest_backup_timestamp,
+    }
+
+    return render_template(
+        "dashboard.html",
+        stats=stats,
+        recent_audit_entries=recent_audit_entries,
+    )
 
 
 # --------------------------
