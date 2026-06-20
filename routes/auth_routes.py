@@ -1,8 +1,8 @@
 """
 Authentication and Setup Routes
 
-Contains routes for first-admin setup, login, logout, home, session validation,
-and changing the logged-in user's password.
+Contains routes for first-admin setup, login, logout, role-based landing,
+session validation, and changing the logged-in user's password.
 """
 
 import sqlite3 as sql
@@ -82,10 +82,10 @@ def require_login():
 
 
 # --------------------------
-# Root Redirect
+# Landing
 # --------------------------
 @auth_bp.route("/")
-def home():
+def landing():
     """Route logged-in users to the primary page for their role."""
     if employee_count() == 0:
         session.clear()
@@ -227,7 +227,7 @@ def login():
             session["PasswordHash"] = matching_user["PasswordHash"]
 
             flash("Login successful.")
-            return redirect(url_for("auth.home"))
+            return redirect(url_for("auth.landing"))
 
         session.clear()
         flash("Invalid username and/or password!")
@@ -317,6 +317,6 @@ def changepassword():
         log_audit("CHANGE_PASSWORD", "User changed their own password.")
 
         flash("Password changed successfully.")
-        return redirect(url_for("auth.home"))
+        return redirect(url_for("auth.landing"))
 
     return render_template("changepassword.html")
