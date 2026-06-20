@@ -7,7 +7,8 @@
 </head>
 
 <body>
-<header>
+<div class="app-shell">
+<header class="sidebar">
     <h1>Flask Employee Manager</h1>
 
     {% if session.get("UserID") %}
@@ -17,31 +18,49 @@
     <p class="user-status">Logged in as {{ session.get("name") }}</p>
 
     <nav>
-        <a href="{{ url_for('auth.home') }}">Home</a>
-        <a href="{{ url_for('payraise.mypayraises') }}">My Pay Raises</a>
+        <section class="nav-section">
+            <h2>Main</h2>
+            {% if security_level == 1 %}
+            <a href="{{ url_for('employee.dashboard') }}">Dashboard</a>
+            {% endif %}
+            <a href="{{ url_for('payraise.mypayraises') }}">My Pay Raises</a>
+        </section>
 
         {% if security_level == 1 %}
-        <a href="{{ url_for('employee.dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('employee.addemployee') }}">Add Employee</a>
-        <a href="{{ url_for('employee.auditlog') }}">Audit Log</a>
+        <section class="nav-section">
+            <h2>Admin</h2>
+            <a href="{{ url_for('employee.addemployee') }}">Add Employee</a>
+            <a href="{{ url_for('employee.auditlog') }}">Audit Log</a>
+        </section>
         {% endif %}
 
         {% if can_manage_payraises %}
-        <a href="{{ url_for('employee.listemployees') }}">List Employees</a>
-        <a href="{{ url_for('payraise.listpayraises') }}">List Pay Raises</a>
-        <a href="{{ url_for('payraise.sendaddpayraisehmac') }}">Add Pay Raise</a>
-        <a href="{{ url_for('payraise.submitdeletepayraise') }}">Void Pay Raise Request</a>
+        <section class="nav-section">
+            <h2>Employee Management</h2>
+            <a href="{{ url_for('employee.listemployees') }}">List Employees</a>
+        </section>
+
+        <section class="nav-section">
+            <h2>Pay Raise Management</h2>
+            <a href="{{ url_for('payraise.listpayraises') }}">List Pay Raises</a>
+            <a class="nav-action" href="{{ url_for('payraise.sendaddpayraisehmac') }}">Add Pay Raise</a>
+            <a class="nav-action" href="{{ url_for('payraise.submitdeletepayraise') }}">Void Pay Raise</a>
+        </section>
         {% endif %}
 
-        <a href="{{ url_for('auth.changepassword') }}">Change Password</a>
-        <a href="{{ url_for('auth.logout') }}">Log Out</a>
+        <section class="nav-section">
+            <h2>Account</h2>
+            <a href="{{ url_for('auth.changepassword') }}">Change Password</a>
+            <a href="{{ url_for('auth.logout') }}">Log Out</a>
+        </section>
     </nav>
     {% endif %}
 </header>
 
-<main>
+<main class="content">
     {% block content %}
     {% endblock %}
 </main>
+</div>
 </body>
 </html>
