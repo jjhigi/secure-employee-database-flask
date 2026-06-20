@@ -6,18 +6,29 @@ body {
     padding: 0;
 }
 
-header {
-    background-color: #1f2937;
-    color: white;
-    padding: 20px 30px;
+.app-shell {
+    min-height: 100vh;
+    display: flex;
 }
 
-header h1 {
+.sidebar {
+    background-color: #1f2937;
+    color: white;
+    width: 280px;
+    min-height: 100vh;
+    box-sizing: border-box;
+    padding: 24px 24px 28px;
+    flex-shrink: 0;
+}
+
+.sidebar h1 {
+    font-size: 1.6rem;
+    line-height: 1.15;
     margin: 0;
 }
 
 .user-status {
-    margin: 8px 0 22px 0;
+    margin: 10px 0 24px 0;
     color: #d1d5db;
     font-style: italic;
 }
@@ -26,14 +37,35 @@ nav {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
-    margin-top: 12px;
+    gap: 22px;
+    margin-top: 60px;
+}
+
+.nav-section {
+    width: 100%;
+}
+
+.nav-section h2 {
+    color: #9ca3af;
+    font-size: 0.72rem;
+    font-weight: bold;
+    letter-spacing: 0.08em;
+    margin: 0 0 8px 0;
+    text-transform: uppercase;
 }
 
 nav a {
+    display: block;
     color: white;
+    line-height: 1.35;
+    margin: 8px 0;
     text-decoration: none;
     font-weight: bold;
+}
+
+.nav-action {
+    border-left: 3px solid #60a5fa;
+    padding-left: 10px;
 }
 
 nav a:hover,
@@ -41,9 +73,10 @@ nav a:focus {
     text-decoration: underline;
 }
 
-main {
+.content {
+    flex: 1;
     max-width: 1000px;
-    margin: 30px auto;
+    margin: 46px auto;
     background-color: white;
     padding: 25px;
     border-radius: 8px;
@@ -159,4 +192,19 @@ td a:focus {
 .inline-form input[type="submit"] {
     padding: 5px 10px;
     font-size: 0.9rem;
+}
+
+@media (max-width: 760px) {
+    .app-shell {
+        display: block;
+    }
+
+    .sidebar {
+        width: auto;
+        min-height: 0;
+    }
+
+    .content {
+        margin: 20px 12px;
+    }
 }

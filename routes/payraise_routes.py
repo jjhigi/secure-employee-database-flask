@@ -284,12 +284,12 @@ def submitdeletepayraise():
 
             return render_template(
                 "result.html",
-                msg="Void pay raise request successfully sent.",
+                msg="Void pay raise successfully sent.",
             )
         except OSError:
             return render_template(
                 "result.html",
-                msg="Error - void pay raise request NOT sent.",
+                msg="Error - pay raise was NOT voided.",
             )
 
     return render_template("submitdeletepayraise.html")

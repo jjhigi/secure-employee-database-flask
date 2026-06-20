@@ -82,11 +82,11 @@ def require_login():
 
 
 # --------------------------
-# Home
+# Root Redirect
 # --------------------------
 @auth_bp.route("/")
 def home():
-    """Show the home page or redirect to first-admin setup when the database is empty."""
+    """Route logged-in users to the primary page for their role."""
     if employee_count() == 0:
         session.clear()
         return redirect(url_for("auth.setup_admin"))
@@ -95,7 +95,13 @@ def home():
     if guard:
         return guard
 
-    return render_template("home.html", name=session.get("name"))
+    if session.get("SecurityLevel") == 1:
+        return redirect(url_for("employee.dashboard"))
+
+    if session.get("SecurityLevel") == 2:
+        return redirect(url_for("employee.listemployees"))
+
+    return redirect(url_for("payraise.mypayraises"))
 
 
 # --------------------------
