@@ -48,7 +48,7 @@ class AddPayRaiseHandler(socketserver.BaseRequestHandler):
     """
 
     def handle(self):
-        data = self.request.recv(2048).strip()
+        data = self.request.recv(2048)
         client_ip = self.client_address[0]
 
         print(f"{client_ip} sent message:")

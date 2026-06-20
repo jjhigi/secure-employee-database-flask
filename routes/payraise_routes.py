@@ -22,7 +22,7 @@ import Encryption
 from audit import log_audit
 from auth_helpers import require_level
 from config import HMAC_SECRET
-from crypto_helpers import dec, enc
+from crypto_helpers import dec
 from db import get_db
 from routes.auth_routes import require_login
 from validation_constants import MAX_RAISE_AMOUNT
@@ -208,46 +208,6 @@ def mypayraises():
 
 
 # --------------------------
-# Add Pay Raise
-# --------------------------
-@payraise_bp.route("/addpayraise", methods=["GET", "POST"])
-def addpayraise():
-    """Add a pay raise for the currently logged-in user."""
-    guard = require_login()
-    if guard:
-        return guard
-
-    if request.method == "POST":
-        date = request.form.get("PayRaiseDate", "").strip()
-        amount = request.form.get("RaiseAmt", "").strip()
-
-        errors = []
-
-        errors.extend(validate_payraise_date(date, "Date"))
-
-        amount_errors, amount_value = validate_raise_amount(amount, "Raise amount")
-        errors.extend(amount_errors)
-
-        if errors:
-            return render_template("result.html", msg=", ".join(errors))
-
-        with get_db() as con:
-            cur = con.cursor()
-            cur.execute(
-                """
-                INSERT INTO EmpPayRaise (EmpID, PayRaiseDate, RaiseAmt)
-                VALUES (?, ?, ?)
-                """,
-                (session["UserID"], date, enc(str(amount_value))),
-            )
-            con.commit()
-
-        return render_template("result.html", msg="Pay raise added!")
-
-    return render_template("addpayraise.html")
-
-
-# --------------------------
 # Submit Pay Raise Void Request
 # --------------------------
 @payraise_bp.route("/submitdeletepayraise", methods=["GET", "POST"])
@@ -299,13 +259,22 @@ def submitdeletepayraise():
                 msg="No active pay raise found for that EmpID and PayRaiseDate.",
             )
 
-        plain_msg = f"{emp_id}{HMAC_SEPARATOR}{date}"
-        encrypted_text = enc(plain_msg)
+        body_text = f"{emp_id}{HMAC_SEPARATOR}{date}"
+        body_bytes = body_text.encode("utf-8")
+        body_encrypted = Encryption.cipher.encrypt(body_bytes)
+
+        tag = hmac.new(
+            HMAC_SECRET,
+            body_bytes,
+            digestmod=hashlib.sha3_512,
+        ).digest()
+
+        sent_message = body_encrypted + tag
 
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect((VOID_HOST, VOID_PORT))
-            sock.sendall(encrypted_text.encode("utf-8"))
+            sock.sendall(sent_message)
             sock.close()
 
             log_audit(
@@ -337,7 +306,7 @@ def sendaddpayraisehmac():
     The message body is encrypted before sending, and the plaintext body is
     signed with HMAC-SHA3-512 so the receiver can detect tampering.
     """
-    guard = require_login()
+    guard = require_level({1, 2})
     if guard:
         return guard
 

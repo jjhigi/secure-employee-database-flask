@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}HMAC Add Pay Raise{% endblock %}
+{% block title %}Add Pay Raise{% endblock %}
 
 {% block content %}
-<h2>HMAC Add Pay Raise</h2>
+<h2>Add Pay Raise</h2>
 
 <form method="post" action="{{ url_for('payraise.sendaddpayraisehmac') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -17,6 +17,6 @@
     <label for="RaiseAmt">Raise Amount:</label><br>
     <input type="text" id="RaiseAmt" name="RaiseAmt"><br><br>
 
-    <input type="submit" value="Send HMAC Add Request">
+    <input type="submit" value="Send Add Pay Raise Request">
 </form>
 {% endblock %}

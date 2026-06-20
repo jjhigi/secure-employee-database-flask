@@ -63,9 +63,9 @@ The app uses numeric security levels for authorization.
 
 | Level | Role | Main Permissions |
 |-------|------|------------------|
-| 1 | Admin | Manage employees, reset passwords, deactivate/reactivate accounts, view audit logs, list all pay raises, and void pay raises |
-| 2 | Manager | List employees, list all pay raises, and void pay raises |
-| 3 | Employee | View own pay raises, add own pay raises, and change own password |
+| 1 | Admin | Manage employees, reset passwords, deactivate/reactivate accounts, view audit logs, list all pay raises, add pay raises, and void pay raises |
+| 2 | Manager | List employees, list all pay raises, add pay raises, and void pay raises |
+| 3 | Employee | View own pay raises and change own password |
 
 Access control is centralized through `auth_helpers.py`.
 
@@ -115,8 +115,7 @@ Templates include CSRF tokens for protected POST forms, including:
 - Edit employee
 - Reset password
 - Deactivate/reactivate employee
-- Add pay raise
-- Void pay raise request
+- HMAC void pay raise request
 - HMAC add pay raise request
 - Change password
 - First admin setup
@@ -183,12 +182,12 @@ Voided pay raises:
 
 Some pay raise actions use local TCP socket servers.
 
-Socket workflows:
+Admin and manager socket workflows:
 
-- Encrypted pay raise void request
+- Encrypted and HMAC-authenticated pay raise void request
 - Encrypted and HMAC-authenticated pay raise creation request
 
-The HMAC add-pay-raise workflow:
+The HMAC pay raise socket workflows:
 
 - Builds a plaintext message body
 - Encrypts the message body

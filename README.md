@@ -27,9 +27,9 @@ The goal is a secure, usable local database that runs on one admin computer with
 * Change your own password while logged in
 * Store employee passwords as hashes, never plaintext
 * Encrypt selected employee and pay raise fields at rest
-* Add, list, filter, and void pay raise records
-* Submit socket-based encrypted pay raise void requests
-* Submit socket-based encrypted and HMAC-authenticated pay raise creation requests
+* List and filter pay raise records by role
+* Let admins and managers submit socket-based encrypted and HMAC-authenticated pay raise void requests
+* Let admins and managers submit socket-based encrypted and HMAC-authenticated pay raise creation requests
 * Create timestamped local database backups
 * Restore from backup with a safety backup created first
 * Reset and rebuild demo data for testing
@@ -48,7 +48,7 @@ The goal is a secure, usable local database that runs on one admin computer with
 * Session cookies use `HttpOnly` and `SameSite=Lax`.
 * Sensitive account actions are written to the `AuditLog` table.
 * Pay raise records are voided instead of permanently deleted.
-* HMAC validation helps detect tampered add-pay-raise socket messages.
+* HMAC validation helps detect tampered pay raise socket messages.
 * Local secrets, databases, backups, virtual environments, IDE files, and project notes are excluded from Git.
 
 More detailed security notes are documented in `SECURITY.md`.
@@ -57,9 +57,9 @@ More detailed security notes are documented in `SECURITY.md`.
 
 | Level | Role     | Main Permissions                                                                                                             |
 | ----- | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| 1     | Admin    | Manage employees, reset passwords, deactivate/reactivate accounts, view audit logs, list all pay raises, and void pay raises |
-| 2     | Manager  | List employees, list all pay raises, and void pay raises                                                                     |
-| 3     | Employee | View own pay raises, add own pay raises, and change own password                                                             |
+| 1     | Admin    | Manage employees, reset passwords, deactivate/reactivate accounts, view audit logs, list all pay raises, add pay raises, and void pay raises |
+| 2     | Manager  | List employees, list all pay raises, add pay raises, and void pay raises |
+| 3     | Employee | View own pay raises and change own password |
 
 ## Quick Start
 

@@ -1,42 +1,52 @@
 """
 Encrypted Pay Raise Void Server
 
-TCP server that receives encrypted pay raise void requests, decrypts each
-message, validates the request, and marks the matching pay raise record as
-voided in the local SQLite database.
+TCP server that receives encrypted, HMAC-authenticated pay raise void
+requests, decrypts each message, validates the request, and marks the matching
+pay raise record as voided in the local SQLite database.
 
 The filename still uses "Deletions" for compatibility with the existing
 project scripts and README, but the current behavior is voiding records instead
 of permanently deleting them.
 """
 
+import hashlib
+import hmac
 import socketserver
 import sqlite3
 from datetime import datetime
 
 import Encryption
+from config import HMAC_SECRET
 
 DB_NAME = "EmployeeDB.db"
 HOST = "localhost"
 PORT = 9999
+HMAC_TAG_LEN = 64
 SEPARATOR = "^%$"
 
 
-def dec(value: str) -> str:
-    """Decrypt text into a normal Python string."""
-    return Encryption.cipher.decrypt(value)
+def verify_hmac(message_bytes: bytes, tag: bytes) -> bool:
+    """Return True when the HMAC tag matches the plaintext message bytes."""
+    expected_tag = hmac.new(
+        HMAC_SECRET,
+        message_bytes,
+        digestmod=hashlib.sha3_512,
+    ).digest()
+
+    return hmac.compare_digest(tag, expected_tag)
 
 
 class PayRaiseVoidHandler(socketserver.BaseRequestHandler):
     """
-    Handle one encrypted pay raise void request.
+    Handle one encrypted, HMAC-authenticated pay raise void request.
 
     Expected decrypted message format:
     EmpID^%$PayRaiseDate
     """
 
     def handle(self):
-        data = self.request.recv(1024).strip()
+        data = self.request.recv(2048)
         client_ip = self.client_address[0]
 
         print(f"{client_ip} sent message:")
@@ -46,19 +56,25 @@ class PayRaiseVoidHandler(socketserver.BaseRequestHandler):
             print("Validation error: No data received.")
             return
 
-        try:
-            encrypted_text = data.decode("utf-8")
-        except UnicodeDecodeError:
-            print("Validation error: Received bytes could not be decoded as UTF-8.")
+        if len(data) <= HMAC_TAG_LEN:
+            print("Validation error: Message too short to contain an HMAC tag.")
             return
 
+        encrypted_message = data[:-HMAC_TAG_LEN]
+        tag = data[-HMAC_TAG_LEN:]
+
         try:
-            plain_text = dec(encrypted_text)
+            plain_text = Encryption.cipher.decrypt(encrypted_message)
         except Exception as error:
             print(f"Decryption error: {error}")
             return
 
         print(f"Decrypted message: {plain_text}")
+
+        message_bytes = plain_text.encode("utf-8")
+        if not verify_hmac(message_bytes, tag):
+            print("Authentication failed: HMAC verification did not match.")
+            return
 
         if SEPARATOR not in plain_text:
             print("Validation error: Message is missing the separator.")

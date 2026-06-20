@@ -12,30 +12,27 @@
 
     {% if session.get("UserID") %}
     {% set security_level = session.get("SecurityLevel") %}
+    {% set can_manage_payraises = security_level in [1, 2] %}
 
     <p class="user-status">Logged in as {{ session.get("name") }}</p>
 
     <nav>
         <a href="{{ url_for('auth.home') }}">Home</a>
         <a href="{{ url_for('payraise.mypayraises') }}">My Pay Raises</a>
-        <a href="{{ url_for('payraise.addpayraise') }}">Add Pay Raise</a>
 
         {% if security_level == 1 %}
         <a href="{{ url_for('employee.dashboard') }}">Dashboard</a>
         <a href="{{ url_for('employee.addemployee') }}">Add Employee</a>
-        <a href="{{ url_for('employee.listemployees') }}">List Employees</a>
-        <a href="{{ url_for('payraise.listpayraises') }}">List Pay Raises</a>
         <a href="{{ url_for('employee.auditlog') }}">Audit Log</a>
-        {% elif security_level == 2 %}
-        <a href="{{ url_for('employee.listemployees') }}">List Employees</a>
-        <a href="{{ url_for('payraise.listpayraises') }}">List Pay Raises</a>
         {% endif %}
 
-        {% if security_level <= 2 %}
+        {% if can_manage_payraises %}
+        <a href="{{ url_for('employee.listemployees') }}">List Employees</a>
+        <a href="{{ url_for('payraise.listpayraises') }}">List Pay Raises</a>
+        <a href="{{ url_for('payraise.sendaddpayraisehmac') }}">Add Pay Raise</a>
         <a href="{{ url_for('payraise.submitdeletepayraise') }}">Void Pay Raise Request</a>
         {% endif %}
 
-        <a href="{{ url_for('payraise.sendaddpayraisehmac') }}">HMAC Add Pay Raise</a>
         <a href="{{ url_for('auth.changepassword') }}">Change Password</a>
         <a href="{{ url_for('auth.logout') }}">Log Out</a>
     </nav>
