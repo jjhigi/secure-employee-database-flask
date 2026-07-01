@@ -95,6 +95,7 @@ docs/WINDOWS_SETUP.md
 
 ## Documentation
 
+* `docs/TESTING.md` - automated test coverage and pytest commands
 * `docs/WINDOWS_SETUP.md` — Windows setup, running the app, Smart App Control, and PowerShell notes
 * `docs/DATABASE_TOOLS.md` — database initialization, backup, restore, demo reset, and first-admin reset
 * `SECURITY.md` — security design notes
