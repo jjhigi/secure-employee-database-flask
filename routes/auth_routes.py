@@ -25,6 +25,7 @@ from validation_constants import (
     MAX_NAME_LENGTH,
     MAX_PASSWORD_LENGTH,
     MAX_PHONE_LENGTH,
+    MAX_SALARY,
     MIN_PASSWORD_LENGTH,
 )
 
@@ -122,6 +123,7 @@ def setup_admin():
         name = request.form.get("Name", "").strip()
         age = request.form.get("Age", "").strip()
         phone = request.form.get("PhNum", "").strip()
+        current_salary = request.form.get("CurrentSalary", "").strip()
         password = request.form.get("Password", "").strip()
         confirm_password = request.form.get("ConfirmPassword", "").strip()
 
@@ -141,6 +143,20 @@ def setup_admin():
             errors.append(
                 f"Phone number cannot be longer than {MAX_PHONE_LENGTH} characters."
             )
+
+        try:
+            current_salary_value = float(current_salary)
+        except ValueError:
+            current_salary_value = None
+            errors.append("Current salary must be a valid number.")
+
+        if current_salary_value is not None:
+            if current_salary_value <= 0:
+                errors.append("Current salary must be greater than 0.")
+            elif current_salary_value > MAX_SALARY:
+                errors.append(
+                    f"Current salary cannot be more than ${MAX_SALARY:,.2f}."
+                )
 
         if not password:
             errors.append("Password cannot be empty.")
@@ -162,13 +178,14 @@ def setup_admin():
             cur.execute(
                 """
                 INSERT INTO Employee
-                    (Name, Age, PhNum, SecurityLevel, PasswordHash, IsActive)
-                VALUES (?, ?, ?, ?, ?, ?)
+                    (Name, Age, PhNum, CurrentSalary, SecurityLevel, PasswordHash, IsActive)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     enc(name),
                     int(age),
                     enc(phone),
+                    enc(f"{current_salary_value:.2f}"),
                     1,
                     generate_password_hash(password),
                     1,

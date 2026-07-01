@@ -84,18 +84,6 @@ Warning: this deletes existing `Employee`, `EmpPayRaise`, and `AuditLog` records
 
 Use this only for local testing or demonstration.
 
-## Backward-Compatible Reset Command
-
-The project also includes:
-
-```bat
-.venv\Scripts\python.exe setup.py
-```
-
-This is kept as a backward-compatible reset command.
-
-Warning: this also deletes existing `Employee`, `EmpPayRaise`, and `AuditLog` records before recreating demo data.
-
 ## Create a Backup
 
 To create a timestamped backup:
@@ -160,7 +148,6 @@ EmployeeDB_before_restore_
 .venv\Scripts\python.exe backup_db.py
 .venv\Scripts\python.exe restore_db.py backups\EmployeeDB_YYYY-MM-DD_HH-MM-SS.db
 .venv\Scripts\python.exe reset_demo_db.py
-.venv\Scripts\python.exe setup.py
 ```
 
 ## Backup Safety

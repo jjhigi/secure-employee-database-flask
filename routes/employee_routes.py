@@ -27,6 +27,7 @@ from validation_constants import (
     MAX_NAME_LENGTH,
     MAX_PASSWORD_LENGTH,
     MAX_PHONE_LENGTH,
+    MAX_SALARY,
     MIN_PASSWORD_LENGTH,
 )
 
@@ -193,6 +194,7 @@ def addrec():
     name = request.form.get("Name", "").strip()
     age = request.form.get("Age", "").strip()
     phone = request.form.get("PhNum", "").strip()
+    current_salary = request.form.get("CurrentSalary", "").strip()
     security_level = request.form.get("SecurityLevel", "").strip()
     password = request.form.get("Password", "").strip()
     confirm_password = request.form.get("ConfirmPassword", "").strip()
@@ -211,6 +213,20 @@ def addrec():
         errors.append("Phone number cannot be empty.")
     elif len(phone) > MAX_PHONE_LENGTH:
         errors.append(f"Phone number cannot be longer than {MAX_PHONE_LENGTH} characters.")
+
+    try:
+        current_salary_value = float(current_salary)
+    except ValueError:
+        current_salary_value = None
+        errors.append("Current salary must be a valid number.")
+
+    if current_salary_value is not None:
+        if current_salary_value <= 0:
+            errors.append("Current salary must be greater than 0.")
+        elif current_salary_value > MAX_SALARY:
+            errors.append(
+                f"Current salary cannot be more than ${MAX_SALARY:,.2f}."
+            )
 
     if not security_level.isdigit() or not (1 <= int(security_level) <= 3):
         errors.append("Security level must be 1 (Admin), 2 (Manager), or 3 (Employee).")
@@ -232,13 +248,15 @@ def addrec():
         cur = con.cursor()
         cur.execute(
             """
-            INSERT INTO Employee (Name, Age, PhNum, SecurityLevel, PasswordHash)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO Employee
+                (Name, Age, PhNum, CurrentSalary, SecurityLevel, PasswordHash)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
             (
                 enc(name),
                 int(age),
                 enc(phone),
+                enc(f"{current_salary_value:.2f}"),
                 int(security_level),
                 generate_password_hash(password),
             ),
@@ -275,6 +293,11 @@ def listemployees():
             "Name": dec(r["Name"]),
             "Age": r["Age"],
             "PhNum": dec(r["PhNum"]),
+            "CurrentSalary": (
+                f"${float(dec(r['CurrentSalary'])):,.2f}"
+                if r["CurrentSalary"] is not None
+                else "Not set"
+            ),
             "SecurityLevel": r["SecurityLevel"],
             "SecurityLevelLabel": get_security_level_label(r["SecurityLevel"]),
             "IsActive": r["IsActive"],
@@ -331,6 +354,7 @@ def editemployee(user_id):
             name = request.form.get("Name", "").strip()
             age = request.form.get("Age", "").strip()
             phone = request.form.get("PhNum", "").strip()
+            current_salary = request.form.get("CurrentSalary", "").strip()
             security_level = request.form.get("SecurityLevel", "").strip()
 
             errors = []
@@ -350,6 +374,20 @@ def editemployee(user_id):
                     f"Phone number cannot be longer than {MAX_PHONE_LENGTH} characters."
                 )
 
+            try:
+                current_salary_value = float(current_salary)
+            except ValueError:
+                current_salary_value = None
+                errors.append("Current salary must be a valid number.")
+
+            if current_salary_value is not None:
+                if current_salary_value <= 0:
+                    errors.append("Current salary must be greater than 0.")
+                elif current_salary_value > MAX_SALARY:
+                    errors.append(
+                        f"Current salary cannot be more than ${MAX_SALARY:,.2f}."
+                    )
+
             if not security_level.isdigit() or not (1 <= int(security_level) <= 3):
                 errors.append(
                     "Security level must be 1 (Admin), 2 (Manager), or 3 (Employee)."
@@ -360,6 +398,11 @@ def editemployee(user_id):
 
             old_security_level = row["SecurityLevel"]
             new_security_level = int(security_level)
+            old_salary = (
+                float(dec(row["CurrentSalary"]))
+                if row["CurrentSalary"] is not None
+                else None
+            )
 
             cur.execute(
                 """
@@ -367,6 +410,7 @@ def editemployee(user_id):
                 SET Name=?,
                     Age=?,
                     PhNum=?,
+                    CurrentSalary=?,
                     SecurityLevel=?
                 WHERE UserID = ?
                 """,
@@ -374,6 +418,7 @@ def editemployee(user_id):
                     enc(name),
                     int(age),
                     enc(phone),
+                    enc(f"{current_salary_value:.2f}"),
                     new_security_level,
                     user_id,
                 ),
@@ -393,6 +438,12 @@ def editemployee(user_id):
                     ),
                 )
 
+            if old_salary != current_salary_value:
+                log_audit(
+                    "UPDATE_CURRENT_SALARY",
+                    f"Updated current salary for UserID {user_id}.",
+                )
+
             return redirect(url_for("employee.listemployees"))
 
     employee = {
@@ -400,6 +451,11 @@ def editemployee(user_id):
         "Name": dec(row["Name"]),
         "Age": row["Age"],
         "PhNum": dec(row["PhNum"]),
+        "CurrentSalary": (
+            dec(row["CurrentSalary"])
+            if row["CurrentSalary"] is not None
+            else ""
+        ),
         "SecurityLevel": row["SecurityLevel"],
     }
 

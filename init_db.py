@@ -32,6 +32,7 @@ def create_tables():
                 Name          TEXT    NOT NULL,
                 Age           INTEGER NOT NULL,
                 PhNum         TEXT    NOT NULL,
+                CurrentSalary TEXT,
                 SecurityLevel INTEGER NOT NULL,
                 PasswordHash  TEXT    NOT NULL,
                 IsActive      INTEGER NOT NULL DEFAULT 1
@@ -74,6 +75,15 @@ def create_tables():
                 """
             )
             print("Added IsVoided column to EmpPayRaise.")
+
+        if not column_exists(cur, "Employee", "CurrentSalary"):
+            cur.execute(
+                """
+                ALTER TABLE Employee
+                ADD COLUMN CurrentSalary TEXT
+                """
+            )
+            print("Added CurrentSalary column to Employee.")
 
         conn.commit()
 

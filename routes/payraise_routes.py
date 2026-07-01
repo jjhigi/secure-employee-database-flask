@@ -183,6 +183,12 @@ def mypayraises():
         con.row_factory = sql.Row
         cur = con.cursor()
         cur.execute(
+            "SELECT CurrentSalary FROM Employee WHERE UserID = ?",
+            (uid,),
+        )
+        employee = cur.fetchone()
+
+        cur.execute(
             """
             SELECT PayRaiseDate, RaiseAmt
             FROM EmpPayRaise
@@ -194,6 +200,10 @@ def mypayraises():
         )
         rows = cur.fetchall()
 
+    current_salary = "Not set"
+    if employee is not None and employee["CurrentSalary"] is not None:
+        current_salary = f"${float(dec(employee['CurrentSalary'])):,.2f}"
+
     decrypted = []
 
     for r in rows:
@@ -204,7 +214,11 @@ def mypayraises():
             }
         )
 
-    return render_template("mypayraises.html", rows=decrypted)
+    return render_template(
+        "mypayraises.html",
+        rows=decrypted,
+        current_salary=current_salary,
+    )
 
 
 # --------------------------

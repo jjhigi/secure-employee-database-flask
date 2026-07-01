@@ -55,6 +55,7 @@ def reset_demo_database():
             Name          TEXT    NOT NULL,
             Age           INTEGER NOT NULL,
             PhNum         TEXT    NOT NULL,
+            CurrentSalary TEXT,
             SecurityLevel INTEGER NOT NULL,
             PasswordHash  TEXT    NOT NULL,
             IsActive      INTEGER NOT NULL DEFAULT 1
@@ -93,24 +94,26 @@ def reset_demo_database():
     print("AuditLog table created.")
 
     employees = [
-        ("PDiana", 34, "8135550001", 1),
-        ("TJones", 68, "8135550002", 2),
-        ("AMath", 29, "8135550003", 3),
-        ("BSmith", 37, "8135550004", 2),
-        ("CJones", 41, "8135550005", 3),
-        ("KLee", 25, "8135550006", 1),
+        ("PDiana", 34, "8135550001", 78250.00, 1),
+        ("TJones", 68, "8135550002", 68950.00, 2),
+        ("AMath", 29, "8135550003", 54800.00, 3),
+        ("BSmith", 37, "8135550004", 72150.00, 2),
+        ("CJones", 41, "8135550005", 59300.00, 3),
+        ("KLee", 25, "8135550006", 76400.00, 1),
     ]
 
-    for name, age, phone, security_level in employees:
+    for name, age, phone, current_salary, security_level in employees:
         cur.execute(
             """
-            INSERT INTO Employee (Name, Age, PhNum, SecurityLevel, PasswordHash)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO Employee
+                (Name, Age, PhNum, CurrentSalary, SecurityLevel, PasswordHash)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
             (
                 enc(name),
                 age,
                 enc(phone),
+                enc(f"{current_salary:.2f}"),
                 security_level,
                 generate_password_hash(DEMO_PASSWORD),
             ),

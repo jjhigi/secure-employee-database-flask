@@ -27,9 +27,11 @@ The goal is a secure, usable local database that runs on one admin computer with
 * Change your own password while logged in
 * Store employee passwords as hashes, never plaintext
 * Encrypt selected employee and pay raise fields at rest
+* Track encrypted current salary for each employee
 * List and filter pay raise records by role
 * Let admins and managers submit socket-based encrypted and HMAC-authenticated pay raise void requests
 * Let admins and managers submit socket-based encrypted and HMAC-authenticated pay raise creation requests
+* Update current salary atomically when pay raises are added or voided
 * Create timestamped local database backups
 * Restore from backup with a safety backup created first
 * Reset and rebuild demo data for testing
@@ -57,9 +59,9 @@ More detailed security notes are documented in `SECURITY.md`.
 
 | Level | Role     | Main Permissions                                                                                                             |
 | ----- | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| 1     | Admin    | Manage employees, reset passwords, deactivate/reactivate accounts, view audit logs, list all pay raises, add pay raises, and void pay raises |
-| 2     | Manager  | List employees, list all pay raises, add pay raises, and void pay raises |
-| 3     | Employee | View own pay raises and change own password |
+| 1     | Admin    | Manage employees and salaries, reset passwords, deactivate/reactivate accounts, view audit logs, list all pay raises, add pay raises, and void pay raises |
+| 2     | Manager  | List employees and salaries, list all pay raises, add pay raises, and void pay raises |
+| 3     | Employee | View own current salary and pay raises, and change own password |
 
 ## Quick Start
 
@@ -100,6 +102,10 @@ docs/WINDOWS_SETUP.md
 ## Socket Server Features
 
 Some pay raise features use separate local TCP socket servers.
+
+Successful pay raise creation increases the employee's current salary in the
+same database transaction. Voiding an active raise subtracts its amount once
+and marks the record voided in the same transaction.
 
 For full socket functionality, run all three processes at the same time:
 

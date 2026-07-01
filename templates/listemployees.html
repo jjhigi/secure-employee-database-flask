@@ -27,6 +27,7 @@
         <th>Name</th>
         <th>Age</th>
         <th>Phone Number</th>
+        <th>Current Salary</th>
         <th>Role</th>
         <th>Status</th>
         {% if security_level == 1 %}
@@ -40,6 +41,7 @@
         <td>{{ row["Name"] }}</td>
         <td>{{ row["Age"] }}</td>
         <td>{{ row["PhNum"] }}</td>
+        <td>{{ row["CurrentSalary"] }}</td>
         <td>{{ row["SecurityLevelLabel"] }} ({{ row["SecurityLevel"] }})</td>
         <td>{{ row["Status"] }}</td>
 
