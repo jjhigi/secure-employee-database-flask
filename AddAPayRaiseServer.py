@@ -28,6 +28,11 @@ def enc(value: str) -> str:
     return Encryption.cipher.encrypt(value.encode("utf-8")).decode("utf-8")
 
 
+def dec(value: str) -> str:
+    """Decrypt a stored SQLite value back into a string."""
+    return Encryption.cipher.decrypt(value)
+
+
 def verify_hmac(message_bytes: bytes, tag: bytes) -> bool:
     """Return True when the HMAC tag matches the plaintext message bytes."""
     expected_tag = hmac.new(
@@ -121,7 +126,7 @@ class AddPayRaiseHandler(socketserver.BaseRequestHandler):
                 cur = conn.cursor()
 
                 cur.execute(
-                    "SELECT UserID FROM Employee WHERE UserID=?",
+                    "SELECT UserID, CurrentSalary FROM Employee WHERE UserID=?",
                     (emp_id,),
                 )
                 row = cur.fetchone()
@@ -130,12 +135,33 @@ class AddPayRaiseHandler(socketserver.BaseRequestHandler):
                     print("Validation error: EmpID does not exist in the Employee table.")
                     return
 
+                if row[1] is None:
+                    print("Validation error: Employee current salary is not set.")
+                    return
+
+                try:
+                    current_salary = float(dec(row[1]))
+                except (TypeError, ValueError) as error:
+                    print(f"Data error: Employee current salary is invalid: {error}")
+                    return
+
+                updated_salary = current_salary + raise_amt
+
                 cur.execute(
                     """
                     INSERT INTO EmpPayRaise (EmpID, PayRaiseDate, RaiseAmt)
                     VALUES (?, ?, ?)
                     """,
                     (emp_id, payraise_date, enc(str(raise_amt))),
+                )
+
+                cur.execute(
+                    """
+                    UPDATE Employee
+                    SET CurrentSalary = ?
+                    WHERE UserID = ?
+                    """,
+                    (enc(f"{updated_salary:.2f}"), emp_id),
                 )
                 conn.commit()
 

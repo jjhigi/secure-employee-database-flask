@@ -26,6 +26,16 @@ HMAC_TAG_LEN = 64
 SEPARATOR = "^%$"
 
 
+def enc(value: str) -> str:
+    """Encrypt a string for SQLite storage."""
+    return Encryption.cipher.encrypt(value.encode("utf-8")).decode("utf-8")
+
+
+def dec(value: str) -> str:
+    """Decrypt a stored SQLite value back into a string."""
+    return Encryption.cipher.decrypt(value)
+
+
 def verify_hmac(message_bytes: bytes, tag: bytes) -> bool:
     """Return True when the HMAC tag matches the plaintext message bytes."""
     expected_tag = hmac.new(
@@ -109,11 +119,14 @@ class PayRaiseVoidHandler(socketserver.BaseRequestHandler):
 
                 cur.execute(
                     """
-                    SELECT PayRaiseID
+                    SELECT EmpPayRaise.PayRaiseID,
+                           EmpPayRaise.RaiseAmt,
+                           Employee.CurrentSalary
                     FROM EmpPayRaise
-                    WHERE EmpID = ?
-                      AND PayRaiseDate = ?
-                      AND IsVoided = 0
+                    JOIN Employee ON Employee.UserID = EmpPayRaise.EmpID
+                    WHERE EmpPayRaise.EmpID = ?
+                      AND EmpPayRaise.PayRaiseDate = ?
+                      AND EmpPayRaise.IsVoided = 0
                     """,
                     (emp_id, payraise_date),
                 )
@@ -127,6 +140,28 @@ class PayRaiseVoidHandler(socketserver.BaseRequestHandler):
                     return
 
                 payraise_id = row[0]
+                encrypted_raise_amount = row[1]
+                encrypted_current_salary = row[2]
+
+                if encrypted_current_salary is None:
+                    print("Validation error: Employee current salary is not set.")
+                    return
+
+                try:
+                    raise_amount = float(dec(encrypted_raise_amount))
+                    current_salary = float(dec(encrypted_current_salary))
+                except (TypeError, ValueError) as error:
+                    print(f"Data error: Salary data is invalid: {error}")
+                    return
+
+                updated_salary = current_salary - raise_amount
+
+                if updated_salary < 0:
+                    print(
+                        "Validation error: Voiding this raise would make "
+                        "current salary negative."
+                    )
+                    return
 
                 cur.execute(
                     """
@@ -135,6 +170,15 @@ class PayRaiseVoidHandler(socketserver.BaseRequestHandler):
                     WHERE PayRaiseID = ?
                     """,
                     (payraise_id,),
+                )
+
+                cur.execute(
+                    """
+                    UPDATE Employee
+                    SET CurrentSalary = ?
+                    WHERE UserID = ?
+                    """,
+                    (enc(f"{updated_salary:.2f}"), emp_id),
                 )
                 conn.commit()
 

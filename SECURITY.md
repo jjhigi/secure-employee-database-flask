@@ -63,9 +63,9 @@ The app uses numeric security levels for authorization.
 
 | Level | Role | Main Permissions |
 |-------|------|------------------|
-| 1 | Admin | Manage employees, reset passwords, deactivate/reactivate accounts, view audit logs, list all pay raises, add pay raises, and void pay raises |
-| 2 | Manager | List employees, list all pay raises, add pay raises, and void pay raises |
-| 3 | Employee | View own pay raises and change own password |
+| 1 | Admin | Manage employees and salaries, reset passwords, deactivate/reactivate accounts, view audit logs, list all pay raises, add pay raises, and void pay raises |
+| 2 | Manager | List employees and salaries, list all pay raises, add pay raises, and void pay raises |
+| 3 | Employee | View own current salary and pay raises, and change own password |
 
 Access control is centralized through `auth_helpers.py`.
 
@@ -94,6 +94,7 @@ Encrypted fields include:
 
 - Employee name
 - Employee phone number
+- Employee current salary
 - Pay raise amount
 
 Encryption is handled through shared helpers in `crypto_helpers.py`, which call the AES helper in `Encryption.py`.
@@ -129,6 +130,7 @@ Examples:
 - Employee names cannot be blank or exceed the configured limit
 - Ages must be within the allowed range
 - Phone numbers cannot be blank or exceed the configured limit
+- Current salaries must be numeric, greater than zero, and below the configured maximum
 - Passwords must meet configured length limits
 - Security levels must be valid known roles
 - Pay raise amounts must be numeric, greater than zero, and below the configured maximum
@@ -155,6 +157,7 @@ Examples of audited actions:
 - Admin deactivates an employee account
 - Admin reactivates an employee account
 - Admin changes an employee security level
+- Admin updates an employee current salary
 - Admin or manager sends a pay raise void request
 
 Admin users can view and filter audit log entries by:
@@ -177,6 +180,12 @@ Voided pay raises:
 - Show a `Voided` status
 - Are hidden from the current user's personal pay raise page
 - Cannot be voided again as active records
+- Subtract their amount from current salary exactly once
+
+Creating a pay raise inserts the raise and increases current salary in one
+database transaction. Voiding a pay raise marks it voided and decreases current
+salary in one database transaction. If either database change fails, both are
+rolled back.
 
 ## Socket Messaging
 
@@ -275,14 +284,6 @@ python reset_demo_db.py
 ```
 
 This deletes and rebuilds demo tables.
-
-Backward-compatible reset:
-
-```bash
-python setup.py
-```
-
-This also resets demo data and should not be used for safe setup.
 
 ## Future Security Improvements
 
