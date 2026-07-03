@@ -21,12 +21,12 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from audit import log_audit
 from crypto_helpers import dec, enc
 from db import get_db
-from validation_constants import (
-    MAX_NAME_LENGTH,
-    MAX_PASSWORD_LENGTH,
-    MAX_PHONE_LENGTH,
-    MAX_SALARY,
-    MIN_PASSWORD_LENGTH,
+from validation_helpers import (
+    validate_age,
+    validate_name,
+    validate_password,
+    validate_phone,
+    validate_salary,
 )
 
 auth_bp = Blueprint("auth", __name__)
@@ -120,55 +120,24 @@ def setup_admin():
     session.clear()
 
     if request.method == "POST":
-        name = request.form.get("Name", "").strip()
-        age = request.form.get("Age", "").strip()
-        phone = request.form.get("PhNum", "").strip()
-        current_salary = request.form.get("CurrentSalary", "").strip()
-        password = request.form.get("Password", "").strip()
-        confirm_password = request.form.get("ConfirmPassword", "").strip()
+        name_errors, name = validate_name(request.form.get("Name", ""))
+        age_errors, age = validate_age(request.form.get("Age", ""))
+        phone_errors, phone = validate_phone(request.form.get("PhNum", ""))
+        salary_errors, current_salary = validate_salary(
+            request.form.get("CurrentSalary", "")
+        )
+        password_errors, password = validate_password(
+            request.form.get("Password", ""),
+            request.form.get("ConfirmPassword", ""),
+        )
 
-        errors = []
-
-        if not name:
-            errors.append("Name cannot be empty.")
-        elif len(name) > MAX_NAME_LENGTH:
-            errors.append(f"Name cannot be longer than {MAX_NAME_LENGTH} characters.")
-
-        if not age.isdigit() or not (1 <= int(age) <= 120):
-            errors.append("Age must be 1-120.")
-
-        if not phone:
-            errors.append("Phone number cannot be empty.")
-        elif len(phone) > MAX_PHONE_LENGTH:
-            errors.append(
-                f"Phone number cannot be longer than {MAX_PHONE_LENGTH} characters."
-            )
-
-        try:
-            current_salary_value = float(current_salary)
-        except ValueError:
-            current_salary_value = None
-            errors.append("Current salary must be a valid number.")
-
-        if current_salary_value is not None:
-            if current_salary_value <= 0:
-                errors.append("Current salary must be greater than 0.")
-            elif current_salary_value > MAX_SALARY:
-                errors.append(
-                    f"Current salary cannot be more than ${MAX_SALARY:,.2f}."
-                )
-
-        if not password:
-            errors.append("Password cannot be empty.")
-        elif len(password) < MIN_PASSWORD_LENGTH:
-            errors.append(f"Password must be at least {MIN_PASSWORD_LENGTH} characters.")
-        elif len(password) > MAX_PASSWORD_LENGTH:
-            errors.append(
-                f"Password cannot be longer than {MAX_PASSWORD_LENGTH} characters."
-            )
-
-        if password != confirm_password:
-            errors.append("Passwords do not match.")
+        errors = (
+            name_errors
+            + age_errors
+            + phone_errors
+            + salary_errors
+            + password_errors
+        )
 
         if errors:
             return render_template("result.html", msg=", ".join(errors))
@@ -183,9 +152,9 @@ def setup_admin():
                 """,
                 (
                     enc(name),
-                    int(age),
+                    age,
                     enc(phone),
-                    enc(f"{current_salary_value:.2f}"),
+                    enc(f"{current_salary:.2f}"),
                     1,
                     generate_password_hash(password),
                     1,
@@ -274,27 +243,19 @@ def changepassword():
 
     if request.method == "POST":
         current_password = request.form.get("CurrentPassword", "").strip()
-        new_password = request.form.get("NewPassword", "").strip()
-        confirm_password = request.form.get("ConfirmPassword", "").strip()
 
         errors = []
 
         if not current_password:
             errors.append("Current password cannot be empty.")
 
-        if not new_password:
-            errors.append("New password cannot be empty.")
-        elif len(new_password) < MIN_PASSWORD_LENGTH:
-            errors.append(
-                f"New password must be at least {MIN_PASSWORD_LENGTH} characters."
-            )
-        elif len(new_password) > MAX_PASSWORD_LENGTH:
-            errors.append(
-                f"New password cannot be longer than {MAX_PASSWORD_LENGTH} characters."
-            )
-
-        if new_password != confirm_password:
-            errors.append("New passwords do not match.")
+        password_errors, new_password = validate_password(
+            request.form.get("NewPassword", ""),
+            request.form.get("ConfirmPassword", ""),
+            field_name="New password",
+            mismatch_message="New passwords do not match.",
+        )
+        errors.extend(password_errors)
 
         with get_db() as con:
             con.row_factory = sql.Row

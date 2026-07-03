@@ -137,7 +137,8 @@ Examples:
 - Pay raise dates must be valid dates within the allowed range
 - User IDs and employee IDs must be numeric where required
 
-Shared validation limits are stored in `validation_constants.py`.
+Shared validation rules are implemented in `validation_helpers.py`, with field
+limits stored in `validation_constants.py`.
 
 ## Audit Logging
 

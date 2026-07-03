@@ -14,10 +14,10 @@ import hashlib
 import hmac
 import socketserver
 import sqlite3
-from datetime import datetime
 
 import Encryption
 from config import HMAC_SECRET
+from validation_helpers import validate_payraise_date
 
 DB_NAME = "EmployeeDB.db"
 HOST = "localhost"
@@ -107,10 +107,9 @@ class PayRaiseVoidHandler(socketserver.BaseRequestHandler):
             print("Validation error: EmpID must be a positive integer.")
             return
 
-        try:
-            datetime.strptime(payraise_date, "%Y-%m-%d")
-        except ValueError:
-            print("Validation error: PayRaiseDate must be in YYYY-MM-DD format.")
+        date_errors = validate_payraise_date(payraise_date, "PayRaiseDate")
+        if date_errors:
+            print(f"Validation error: {', '.join(date_errors)}")
             return
 
         try:

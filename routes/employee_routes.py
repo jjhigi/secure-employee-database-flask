@@ -23,12 +23,13 @@ from audit import log_audit
 from auth_helpers import require_level
 from crypto_helpers import dec, enc
 from db import get_db
-from validation_constants import (
-    MAX_NAME_LENGTH,
-    MAX_PASSWORD_LENGTH,
-    MAX_PHONE_LENGTH,
-    MAX_SALARY,
-    MIN_PASSWORD_LENGTH,
+from validation_helpers import (
+    validate_age,
+    validate_name,
+    validate_password,
+    validate_phone,
+    validate_salary,
+    validate_security_level,
 )
 
 employee_bp = Blueprint("employee", __name__)
@@ -191,55 +192,28 @@ def addrec():
     if guard:
         return guard
 
-    name = request.form.get("Name", "").strip()
-    age = request.form.get("Age", "").strip()
-    phone = request.form.get("PhNum", "").strip()
-    current_salary = request.form.get("CurrentSalary", "").strip()
-    security_level = request.form.get("SecurityLevel", "").strip()
-    password = request.form.get("Password", "").strip()
-    confirm_password = request.form.get("ConfirmPassword", "").strip()
+    name_errors, name = validate_name(request.form.get("Name", ""))
+    age_errors, age = validate_age(request.form.get("Age", ""))
+    phone_errors, phone = validate_phone(request.form.get("PhNum", ""))
+    salary_errors, current_salary = validate_salary(
+        request.form.get("CurrentSalary", "")
+    )
+    security_errors, security_level = validate_security_level(
+        request.form.get("SecurityLevel", "")
+    )
+    password_errors, password = validate_password(
+        request.form.get("Password", ""),
+        request.form.get("ConfirmPassword", ""),
+    )
 
-    errors = []
-
-    if not name:
-        errors.append("Name cannot be empty.")
-    elif len(name) > MAX_NAME_LENGTH:
-        errors.append(f"Name cannot be longer than {MAX_NAME_LENGTH} characters.")
-
-    if not age.isdigit() or not (1 <= int(age) <= 120):
-        errors.append("Age must be 1-120.")
-
-    if not phone:
-        errors.append("Phone number cannot be empty.")
-    elif len(phone) > MAX_PHONE_LENGTH:
-        errors.append(f"Phone number cannot be longer than {MAX_PHONE_LENGTH} characters.")
-
-    try:
-        current_salary_value = float(current_salary)
-    except ValueError:
-        current_salary_value = None
-        errors.append("Current salary must be a valid number.")
-
-    if current_salary_value is not None:
-        if current_salary_value <= 0:
-            errors.append("Current salary must be greater than 0.")
-        elif current_salary_value > MAX_SALARY:
-            errors.append(
-                f"Current salary cannot be more than ${MAX_SALARY:,.2f}."
-            )
-
-    if not security_level.isdigit() or not (1 <= int(security_level) <= 3):
-        errors.append("Security level must be 1 (Admin), 2 (Manager), or 3 (Employee).")
-
-    if not password:
-        errors.append("Password cannot be empty.")
-    elif len(password) < MIN_PASSWORD_LENGTH:
-        errors.append(f"Password must be at least {MIN_PASSWORD_LENGTH} characters.")
-    elif len(password) > MAX_PASSWORD_LENGTH:
-        errors.append(f"Password cannot be longer than {MAX_PASSWORD_LENGTH} characters.")
-
-    if password != confirm_password:
-        errors.append("Passwords do not match.")
+    errors = (
+        name_errors
+        + age_errors
+        + phone_errors
+        + salary_errors
+        + security_errors
+        + password_errors
+    )
 
     if errors:
         return render_template("result.html", msg=", ".join(errors))
@@ -254,10 +228,10 @@ def addrec():
             """,
             (
                 enc(name),
-                int(age),
+                age,
                 enc(phone),
-                enc(f"{current_salary_value:.2f}"),
-                int(security_level),
+                enc(f"{current_salary:.2f}"),
+                security_level,
                 generate_password_hash(password),
             ),
         )
@@ -351,53 +325,29 @@ def editemployee(user_id):
             return render_template("result.html", msg="Employee not found.")
 
         if request.method == "POST":
-            name = request.form.get("Name", "").strip()
-            age = request.form.get("Age", "").strip()
-            phone = request.form.get("PhNum", "").strip()
-            current_salary = request.form.get("CurrentSalary", "").strip()
-            security_level = request.form.get("SecurityLevel", "").strip()
+            name_errors, name = validate_name(request.form.get("Name", ""))
+            age_errors, age = validate_age(request.form.get("Age", ""))
+            phone_errors, phone = validate_phone(request.form.get("PhNum", ""))
+            salary_errors, current_salary = validate_salary(
+                request.form.get("CurrentSalary", "")
+            )
+            security_errors, security_level = validate_security_level(
+                request.form.get("SecurityLevel", "")
+            )
 
-            errors = []
-
-            if not name:
-                errors.append("Name cannot be empty.")
-            elif len(name) > MAX_NAME_LENGTH:
-                errors.append(f"Name cannot be longer than {MAX_NAME_LENGTH} characters.")
-
-            if not age.isdigit() or not (1 <= int(age) <= 120):
-                errors.append("Age must be 1-120.")
-
-            if not phone:
-                errors.append("Phone number cannot be empty.")
-            elif len(phone) > MAX_PHONE_LENGTH:
-                errors.append(
-                    f"Phone number cannot be longer than {MAX_PHONE_LENGTH} characters."
-                )
-
-            try:
-                current_salary_value = float(current_salary)
-            except ValueError:
-                current_salary_value = None
-                errors.append("Current salary must be a valid number.")
-
-            if current_salary_value is not None:
-                if current_salary_value <= 0:
-                    errors.append("Current salary must be greater than 0.")
-                elif current_salary_value > MAX_SALARY:
-                    errors.append(
-                        f"Current salary cannot be more than ${MAX_SALARY:,.2f}."
-                    )
-
-            if not security_level.isdigit() or not (1 <= int(security_level) <= 3):
-                errors.append(
-                    "Security level must be 1 (Admin), 2 (Manager), or 3 (Employee)."
-                )
+            errors = (
+                name_errors
+                + age_errors
+                + phone_errors
+                + salary_errors
+                + security_errors
+            )
 
             if errors:
                 return render_template("result.html", msg=", ".join(errors))
 
             old_security_level = row["SecurityLevel"]
-            new_security_level = int(security_level)
+            new_security_level = security_level
             old_salary = (
                 float(dec(row["CurrentSalary"]))
                 if row["CurrentSalary"] is not None
@@ -416,9 +366,9 @@ def editemployee(user_id):
                 """,
                 (
                     enc(name),
-                    int(age),
+                    age,
                     enc(phone),
-                    enc(f"{current_salary_value:.2f}"),
+                    enc(f"{current_salary:.2f}"),
                     new_security_level,
                     user_id,
                 ),
@@ -438,7 +388,7 @@ def editemployee(user_id):
                     ),
                 )
 
-            if old_salary != current_salary_value:
+            if old_salary != current_salary:
                 log_audit(
                     "UPDATE_CURRENT_SALARY",
                     f"Updated current salary for UserID {user_id}.",
@@ -495,22 +445,10 @@ def resetpassword(user_id):
         }
 
         if request.method == "POST":
-            password = request.form.get("Password", "").strip()
-            confirm_password = request.form.get("ConfirmPassword", "").strip()
-
-            errors = []
-
-            if not password:
-                errors.append("Password cannot be empty.")
-            elif len(password) < MIN_PASSWORD_LENGTH:
-                errors.append(f"Password must be at least {MIN_PASSWORD_LENGTH} characters.")
-            elif len(password) > MAX_PASSWORD_LENGTH:
-                errors.append(
-                    f"Password cannot be longer than {MAX_PASSWORD_LENGTH} characters."
-                )
-
-            if password != confirm_password:
-                errors.append("Passwords do not match.")
+            errors, password = validate_password(
+                request.form.get("Password", ""),
+                request.form.get("ConfirmPassword", ""),
+            )
 
             if errors:
                 return render_template("result.html", msg=", ".join(errors))
