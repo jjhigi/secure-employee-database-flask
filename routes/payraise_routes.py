@@ -9,7 +9,6 @@ import hashlib
 import hmac
 import socket
 import sqlite3 as sql
-from datetime import datetime
 
 from flask import (
     Blueprint,
@@ -25,7 +24,11 @@ from config import HMAC_SECRET
 from crypto_helpers import dec
 from db import get_db
 from routes.auth_routes import require_login
-from validation_constants import MAX_RAISE_AMOUNT
+from validation_helpers import (
+    validate_employee_id,
+    validate_payraise_date,
+    validate_raise_amount,
+)
 
 payraise_bp = Blueprint("payraise", __name__)
 
@@ -38,57 +41,6 @@ HMAC_PORT = 8888
 
 VOID_HOST = "localhost"
 VOID_PORT = 9999
-
-
-# --------------------------
-# Validation Helpers
-# --------------------------
-def validate_payraise_date(date_text, field_name):
-    """Validate a pay raise date and return a list of error messages."""
-    errors = []
-
-    if not date_text:
-        errors.append(f"{field_name} is required.")
-        return errors
-
-    try:
-        date_value = datetime.strptime(date_text, "%Y-%m-%d").date()
-    except ValueError:
-        errors.append(f"{field_name} must be a valid date in YYYY-MM-DD format.")
-        return errors
-
-    earliest_allowed_date = datetime.strptime("2000-01-01", "%Y-%m-%d").date()
-    today = datetime.today().date()
-
-    if date_value < earliest_allowed_date:
-        errors.append(f"{field_name} cannot be before 2000-01-01.")
-    elif date_value > today:
-        errors.append(f"{field_name} cannot be in the future.")
-
-    return errors
-
-
-def validate_raise_amount(amount_text, field_name):
-    """Validate a raise amount and return error messages plus the parsed amount."""
-    errors = []
-    amount_value = None
-
-    if not amount_text:
-        errors.append(f"{field_name} is required.")
-        return errors, amount_value
-
-    try:
-        amount_value = float(amount_text)
-    except ValueError:
-        errors.append(f"{field_name} must be a numeric value.")
-        return errors, amount_value
-
-    if amount_value <= 0:
-        errors.append(f"{field_name} must be greater than 0.")
-    elif amount_value > MAX_RAISE_AMOUNT:
-        errors.append(f"{field_name} cannot be more than ${MAX_RAISE_AMOUNT:,.2f}.")
-
-    return errors, amount_value
 
 
 # --------------------------
@@ -240,13 +192,13 @@ def submitdeletepayraise():
         emp_id = request.form.get("EmpID", "").strip()
         date = request.form.get("PayRaiseDate", "").strip()
 
-        errors = []
+        emp_id_errors, emp_id_value = validate_employee_id(
+            emp_id,
+            numeric_message="EmpID must be a number.",
+            require_positive=False,
+        )
 
-        if not emp_id:
-            errors.append("EmpID is required.")
-        elif not emp_id.isdigit():
-            errors.append("EmpID must be a number.")
-
+        errors = emp_id_errors
         errors.extend(validate_payraise_date(date, "PayRaiseDate"))
 
         if errors:
@@ -263,7 +215,7 @@ def submitdeletepayraise():
                   AND PayRaiseDate = ?
                   AND IsVoided = 0
                 """,
-                (int(emp_id), date),
+                (emp_id_value, date),
             )
             row = cur.fetchone()
 
@@ -329,21 +281,16 @@ def sendaddpayraisehmac():
         payraise_date = request.form.get("PayRaiseDate", "").strip()
         raise_amt = request.form.get("RaiseAmt", "").strip()
 
-        errors = []
+        emp_id_errors, emp_id_value = validate_employee_id(emp_id)
+        errors = emp_id_errors
 
-        if not emp_id:
-            errors.append("EmpID is required.")
-        elif not emp_id.isdigit():
-            errors.append("EmpID must be a numeric value.")
-        elif int(emp_id) <= 0:
-            errors.append("EmpID must be greater than 0.")
-        else:
+        if not emp_id_errors:
             with get_db() as con:
                 con.row_factory = sql.Row
                 cur = con.cursor()
                 cur.execute(
                     "SELECT UserID FROM Employee WHERE UserID=?",
-                    (int(emp_id),),
+                    (emp_id_value,),
                 )
                 row = cur.fetchone()
 
