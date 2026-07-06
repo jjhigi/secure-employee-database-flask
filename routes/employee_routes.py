@@ -6,6 +6,7 @@ and audit log viewing/filtering.
 """
 
 from datetime import datetime
+from decimal import Decimal
 from pathlib import Path
 import sqlite3 as sql
 
@@ -74,6 +75,20 @@ def dashboard():
 
         cur.execute("SELECT COUNT(*) FROM Employee WHERE IsActive = 1")
         active_employees = cur.fetchone()[0]
+
+        cur.execute(
+            """
+            SELECT CurrentSalary
+            FROM Employee
+            WHERE IsActive = 1
+              AND CurrentSalary IS NOT NULL
+            """
+        )
+        active_salary_rows = cur.fetchall()
+        active_annual_payroll = sum(
+            (Decimal(dec(row["CurrentSalary"])) for row in active_salary_rows),
+            Decimal("0.00"),
+        )
 
         cur.execute("SELECT COUNT(*) FROM Employee WHERE IsActive = 0")
         inactive_employees = cur.fetchone()[0]
@@ -150,6 +165,7 @@ def dashboard():
     stats = {
         "total_employees": total_employees,
         "active_employees": active_employees,
+        "active_annual_payroll": f"${active_annual_payroll:,.2f}",
         "inactive_employees": inactive_employees,
         "admin_count": admin_count,
         "manager_count": manager_count,
