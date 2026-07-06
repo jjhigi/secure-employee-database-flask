@@ -13,6 +13,11 @@ import sqlite3
 
 import Encryption
 from config import HMAC_SECRET
+from payraise_service import (
+    PayRaiseDataError,
+    PayRaiseValidationError,
+    add_pay_raise,
+)
 from validation_helpers import validate_payraise_date, validate_raise_amount
 
 DB_NAME = "EmployeeDB.db"
@@ -21,16 +26,6 @@ PORT = 8888
 
 HMAC_TAG_LEN = 64
 HMAC_SEPARATOR = "^%$"
-
-
-def enc(value: str) -> str:
-    """Encrypt a string for SQLite storage."""
-    return Encryption.cipher.encrypt(value.encode("utf-8")).decode("utf-8")
-
-
-def dec(value: str) -> str:
-    """Decrypt a stored SQLite value back into a string."""
-    return Encryption.cipher.decrypt(value)
 
 
 def verify_hmac(message_bytes: bytes, tag: bytes) -> bool:
@@ -119,52 +114,15 @@ class AddPayRaiseHandler(socketserver.BaseRequestHandler):
             return
 
         try:
-            with sqlite3.connect(DB_NAME) as conn:
-                cur = conn.cursor()
-
-                cur.execute(
-                    "SELECT UserID, CurrentSalary FROM Employee WHERE UserID=?",
-                    (emp_id,),
-                )
-                row = cur.fetchone()
-
-                if not row:
-                    print("Validation error: EmpID does not exist in the Employee table.")
-                    return
-
-                if row[1] is None:
-                    print("Validation error: Employee current salary is not set.")
-                    return
-
-                try:
-                    current_salary = float(dec(row[1]))
-                except (TypeError, ValueError) as error:
-                    print(f"Data error: Employee current salary is invalid: {error}")
-                    return
-
-                updated_salary = current_salary + raise_amt
-
-                cur.execute(
-                    """
-                    INSERT INTO EmpPayRaise (EmpID, PayRaiseDate, RaiseAmt)
-                    VALUES (?, ?, ?)
-                    """,
-                    (emp_id, payraise_date, enc(str(raise_amt))),
-                )
-
-                cur.execute(
-                    """
-                    UPDATE Employee
-                    SET CurrentSalary = ?
-                    WHERE UserID = ?
-                    """,
-                    (enc(f"{updated_salary:.2f}"), emp_id),
-                )
-                conn.commit()
+            add_pay_raise(DB_NAME, emp_id, payraise_date, raise_amt)
 
             print(f"EmpID: {emp_id}")
             print("Record successfully added.")
 
+        except PayRaiseValidationError as error:
+            print(f"Validation error: {error}")
+        except PayRaiseDataError as error:
+            print(f"Data error: {error}")
         except sqlite3.Error as error:
             print(f"Database error: {error}")
 
