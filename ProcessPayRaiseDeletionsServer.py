@@ -17,6 +17,11 @@ import sqlite3
 
 import Encryption
 from config import HMAC_SECRET
+from payraise_service import (
+    PayRaiseDataError,
+    PayRaiseValidationError,
+    void_pay_raise,
+)
 from validation_helpers import validate_payraise_date
 
 DB_NAME = "EmployeeDB.db"
@@ -24,16 +29,6 @@ HOST = "localhost"
 PORT = 9999
 HMAC_TAG_LEN = 64
 SEPARATOR = "^%$"
-
-
-def enc(value: str) -> str:
-    """Encrypt a string for SQLite storage."""
-    return Encryption.cipher.encrypt(value.encode("utf-8")).decode("utf-8")
-
-
-def dec(value: str) -> str:
-    """Decrypt a stored SQLite value back into a string."""
-    return Encryption.cipher.decrypt(value)
 
 
 def verify_hmac(message_bytes: bytes, tag: bytes) -> bool:
@@ -113,76 +108,14 @@ class PayRaiseVoidHandler(socketserver.BaseRequestHandler):
             return
 
         try:
-            with sqlite3.connect(DB_NAME) as conn:
-                cur = conn.cursor()
-
-                cur.execute(
-                    """
-                    SELECT EmpPayRaise.PayRaiseID,
-                           EmpPayRaise.RaiseAmt,
-                           Employee.CurrentSalary
-                    FROM EmpPayRaise
-                    JOIN Employee ON Employee.UserID = EmpPayRaise.EmpID
-                    WHERE EmpPayRaise.EmpID = ?
-                      AND EmpPayRaise.PayRaiseDate = ?
-                      AND EmpPayRaise.IsVoided = 0
-                    """,
-                    (emp_id, payraise_date),
-                )
-                row = cur.fetchone()
-
-                if not row:
-                    print(
-                        "Validation error: No active matching EmpPayRaise record found "
-                        f"for EmpID={emp_id} and PayRaiseDate={payraise_date}."
-                    )
-                    return
-
-                payraise_id = row[0]
-                encrypted_raise_amount = row[1]
-                encrypted_current_salary = row[2]
-
-                if encrypted_current_salary is None:
-                    print("Validation error: Employee current salary is not set.")
-                    return
-
-                try:
-                    raise_amount = float(dec(encrypted_raise_amount))
-                    current_salary = float(dec(encrypted_current_salary))
-                except (TypeError, ValueError) as error:
-                    print(f"Data error: Salary data is invalid: {error}")
-                    return
-
-                updated_salary = current_salary - raise_amount
-
-                if updated_salary < 0:
-                    print(
-                        "Validation error: Voiding this raise would make "
-                        "current salary negative."
-                    )
-                    return
-
-                cur.execute(
-                    """
-                    UPDATE EmpPayRaise
-                    SET IsVoided = 1
-                    WHERE PayRaiseID = ?
-                    """,
-                    (payraise_id,),
-                )
-
-                cur.execute(
-                    """
-                    UPDATE Employee
-                    SET CurrentSalary = ?
-                    WHERE UserID = ?
-                    """,
-                    (enc(f"{updated_salary:.2f}"), emp_id),
-                )
-                conn.commit()
+            void_pay_raise(DB_NAME, emp_id, payraise_date)
 
             print("Record successfully voided.")
 
+        except PayRaiseValidationError as error:
+            print(f"Validation error: {error}")
+        except PayRaiseDataError as error:
+            print(f"Data error: {error}")
         except sqlite3.Error as error:
             print(f"Database error: {error}")
 
