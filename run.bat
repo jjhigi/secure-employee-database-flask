@@ -19,6 +19,17 @@ if not exist .env (
     exit /b 1
 )
 
+echo Checking database schema...
+.venv\Scripts\python.exe init_db.py
+
+if errorlevel 1 (
+    echo.
+    echo Startup failed: database could not be initialized.
+    pause
+    exit /b 1
+)
+
+echo.
 echo Starting Flask app...
 echo Keep this terminal window open while using the app.
 echo Press Ctrl+C to stop the server.
